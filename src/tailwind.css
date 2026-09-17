@@ -1,0 +1,30 @@
+/* Preserve the existing reset; Preflight would change existing elements. */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@theme inline {
+  --font-sans: var(--font);
+  --color-background: var(--bg);
+  --color-foreground: var(--ink);
+  --color-card: var(--paper);
+  --color-card-foreground: var(--ink);
+  --color-popover: var(--paper);
+  --color-popover-foreground: var(--ink);
+  --color-primary: var(--navy);
+  --color-primary-foreground: #fdfcfe;
+  --color-secondary: var(--lilac);
+  --color-secondary-foreground: var(--ink);
+  --color-muted: #ebe7ef;
+  --color-muted-foreground: var(--ink-2);
+  --color-accent: var(--lilac);
+  --color-accent-foreground: var(--ink);
+  --color-destructive: var(--red);
+  --color-border: var(--line);
+  --color-input: var(--line-strong);
+  --color-ring: var(--lilac);
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: var(--r-card);
+  --radius-xl: var(--r-stage);
+}
