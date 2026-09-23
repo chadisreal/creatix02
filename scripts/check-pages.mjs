@@ -9,7 +9,7 @@ const shots = process.env.SHOTS // optional folder for screenshots
 const origin = 'http://127.0.0.1:5194'
 const server = await preview({ preview: { host: '127.0.0.1', port: 5194, strictPort: true } })
 const browser = await chromium.launch({ channel: 'chrome', headless: true })
-const { PAGES, SITE } = await import('../src/routes.js')
+const { PAGES, SITE, headTags } = await import('../src/routes.js')
 const problems = []
 // Where a section sits in the viewport: near the top, below the floating nav.
 const landed = (page, id) => page.locator('#' + id).evaluate(el => el.getBoundingClientRect().top)
@@ -29,7 +29,8 @@ try {
       assert.equal(await page.title(), route.title)
       assert.equal(await page.locator('link[rel=canonical]').getAttribute('href'), SITE.url + (route.canonical ?? route.path))
       assert.equal(await page.locator('h1').count(), 1, `one h1 on ${route.path}`)
-      assert.equal(await page.locator('head [data-head]').count(), 14, `head tags not duplicated on ${route.path}`)
+      const heads = headTags(route).match(/data-head/g).length
+      assert.equal(await page.locator('head [data-head]').count(), heads, `head tags not duplicated on ${route.path}`)
       if (route.section && route.section !== 'top') {
         await settled(page)
         const top = await landed(page, route.section)
@@ -132,6 +133,30 @@ try {
   }
   await page.setViewportSize({ width: 1440, height: 1000 })
 
+  // The lead form is the money path: intercept the API and prove the phone is normalised before it is sent.
+  await page.goto(origin + '/', { waitUntil: 'networkidle' })
+  let posted = null
+  await page.route('**/api/send-lead', async route => {
+    posted = route.request().postDataJSON()
+    await route.fulfill({ json: { ok: true } })
+  })
+  await page.locator('.hero-actions').getByRole('button', { name: /Let.s Talk/ }).click()
+  await page.getByRole('dialog', { name: /Let.s talk/ }).waitFor()
+  await page.fill('#name', 'Test Lead')
+  await page.fill('#phone', '12345')
+  await page.locator('.form-submit').click()
+  await page.locator('#phone-err').waitFor()
+  assert.equal(posted, null, 'an invalid phone must never reach the API')
+
+  // A +91 prefix and spaces still arrive as ten bare digits.
+  await page.fill('#phone', '+91 98765 43210')
+  await page.locator('.form-submit').click()
+  await page.locator('.sent').waitFor()
+  assert.equal(posted.phone, '9876543210', 'phone normalised before sending')
+  assert.equal(posted.name, 'Test Lead', 'name reaches the API')
+  assert.equal(posted.company, undefined, 'honeypot must arrive empty')
+  await page.unroute('**/api/send-lead')
+
   // Old addresses from the previous site.
   await page.goto(origin + '/about.html', { waitUntil: 'networkidle' })
   assert.equal(page.url(), origin + '/about')
@@ -144,7 +169,7 @@ try {
   await context.close()
 
   assert.deepEqual(problems, [], 'no console errors or hydration mismatches')
-  console.log(`Passed: ${PAGES.length} addresses on desktop and mobile (status, clean URL, title, canonical, single h1, lands on its section, no overflow, no hydration errors), one-page glide + scroll-following address, Back, service sheet, service landing page, results rail, old URLs and 404.`)
+  console.log(`Passed: ${PAGES.length} addresses on desktop and mobile (status, clean URL, title, canonical, single h1, lands on its section, no overflow, no hydration errors), one-page glide + scroll-following address, Back, service sheet, service landing page, results rail, lead form, old URLs and 404.`)
 } finally {
   await browser.close()
   await new Promise(done => server.httpServer.close(done))

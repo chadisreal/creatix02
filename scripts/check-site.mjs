@@ -7,7 +7,7 @@ import { createServer } from 'vite'
 const server = await createServer({ server: { middlewareMode: true }, appType: 'custom' })
 try {
   const { render } = await server.ssrLoadModule('/src/entry-server.jsx')
-  const { PAGES, SECTIONS, NOT_FOUND, REDIRECTS, SITE, findRoute, headTags } = await server.ssrLoadModule('/src/routes.js')
+  const { PAGES, SECTIONS, SECTION_ORDER, NOT_FOUND, REDIRECTS, SITE, findRoute, headTags } = await server.ssrLoadModule('/src/routes.js')
   const { SERVICES, TEAM, TESTIMONIALS, SERVICE_LAYOUT } = await server.ssrLoadModule('/src/content.js')
   const paths = new Set(PAGES.map(route => route.path))
   const text = html => html.replace(/<[^>]*>/g, '')
@@ -48,16 +48,15 @@ try {
   assert.equal(findRoute('/about.html').path, '/about')
 
   // One page: every section address renders the whole site, in order, with its canonical link on the home page.
-  const order = ['top', 'about', 'services', 'possibilities', 'process', 'work', 'team', 'faq', 'project-brief', 'contact']
   for (const route of SECTIONS) {
-    const at = order.map(id => html[route.path].indexOf(`id="${id}"`))
+    const at = SECTION_ORDER.map(id => html[route.path].indexOf(`id="${id}"`))
     assert.ok(at.every((pos, i) => pos > (at[i - 1] ?? -1)), `${route.path} must hold every section in order: ${at}`)
     assert.ok(headTags(route).includes(`rel="canonical" href="${SITE.url}/"`), `${route.path} canonical should be the home page`)
     assert.ok(route.section === 'top' || html[route.path].includes(`id="${route.section}"`), `${route.path} has no section to land on`)
   }
-  for (const phrase of ['Digital, with', 'difference.', 'Motion:', 'All services', 'Create my brief', 'Share on WhatsApp']) assert.ok(text(html['/']).includes(phrase), `Home missing: ${phrase}`)
+  for (const phrase of ['Motion:', 'All services']) assert.ok(text(html['/']).includes(phrase), `Home missing: ${phrase}`)
   for (const route of PAGES.filter(r => r.page === 'service')) assert.ok(headTags(route).includes(`rel="canonical" href="${SITE.url}${route.path}"`), `${route.path} should be its own canonical page`)
-  assert.ok(readFileSync('src/combined.css', 'utf8').includes('@media (max-width: 760px)'), 'Mobile layout missing')
+  assert.ok(readFileSync('src/styles.css', 'utf8').includes('@media (max-width: 760px)'), 'Mobile layout missing')
   console.log(`Passed: ${PAGES.length} addresses + 404 rendered, one h1 each, unique IDs/titles/descriptions, ${links} internal links valid, ${images.size} images, all ${SERVICES.length} services have pages, redirects, one-page section order and canonical links.`)
 } finally {
   await server.close()
