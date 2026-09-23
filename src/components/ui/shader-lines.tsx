@@ -135,9 +135,9 @@ export function ShaderAnimation({ className, paused = false }: ShaderAnimationPr
           const hex = probe.fillStyle.startsWith('#') ? probe.fillStyle : fallback
           return [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255)
         }
-        const color = rgb(style.getPropertyValue('--rings-color') || style.color, '#d4c2f0')
-        const lead = rgb(style.getPropertyValue('--rings-lead'), '#8f6fd6')
-        const trail = rgb(style.getPropertyValue('--rings-trail'), '#e0503f')
+        const color = rgb(style.getPropertyValue('--rings-color') || style.color, '#34bb7b')
+        const lead = rgb(style.getPropertyValue('--rings-lead'), '#7fe0ae')
+        const trail = rgb(style.getPropertyValue('--rings-trail'), '#1d7a4f')
         gl.uniform3f(uniforms.color, color[0], color[1], color[2])
         gl.uniform3f(uniforms.lead, lead[0], lead[1], lead[2])
         gl.uniform3f(uniforms.trail, trail[0], trail[1], trail[2])

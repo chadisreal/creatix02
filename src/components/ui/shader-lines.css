@@ -6,9 +6,9 @@
   --rings-size: .6;
   --rings-cell: 5;
   --rings-line: .3;
-  --rings-color: var(--lilac, #d4c2f0);
-  --rings-lead: #8f6fd6;
-  --rings-trail: #e0503f;
+  --rings-color: #34bb7b;
+  --rings-lead: #7fe0ae;
+  --rings-trail: #1d7a4f;
   display: block;
   opacity: 0;
   transition: opacity 1.4s cubic-bezier(.22, 1, .36, 1);
