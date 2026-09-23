@@ -69,7 +69,7 @@ try {
   await page.waitForURL(origin + '/contact')
   await settled(page)
   assert.ok(await landed(page, 'contact') < 500, 'Contact lands on the contact section')
-  assert.equal(await page.locator('.float-nav a[aria-current=page]').innerText(), 'Contact')
+  assert.equal(await page.locator('.float-nav a[aria-current=page]').textContent(), 'Contact')
 
   await page.goBack()
   await page.waitForURL(origin + '/services')
@@ -106,7 +106,7 @@ try {
   // Arriving from search on a service page: a full page, and the nav takes you into the one page.
   await page.goto(origin + '/pos-billing-software', { waitUntil: 'networkidle' })
   assert.equal(await page.locator('h1').textContent(), 'POS Billing Software')
-  assert.equal(await page.locator('.hero-links a[aria-current=page]').innerText(), 'Expertise')
+  assert.equal(await page.locator('.hero-links a[aria-current=page]').textContent(), 'Expertise')
   await page.locator('.hero-links').getByRole('link', { name: 'Work' }).click()
   await page.waitForURL(origin + '/portfolio')
   await settled(page)

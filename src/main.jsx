@@ -4,7 +4,6 @@ import { SiteMotion } from './site-motion.jsx'
 import App from './App.jsx'
 import './tailwind.css'
 import './styles.css'
-import './combined.css'
 
 const root = document.getElementById('root')
 const app = (
