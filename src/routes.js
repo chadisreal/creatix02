@@ -56,7 +56,7 @@ export const SECTIONS = PAGES.filter(route => route.section)
 
 // Every section on the one page, in render order. The one-page order check reads this,
 // so sections that are added, cut or reordered are updated here and nowhere else.
-export const SECTION_ORDER = ['top', 'about', 'services', 'possibilities', 'process', 'work', 'team', 'faq', 'project-brief', 'contact']
+export const SECTION_ORDER = ['top', 'about', 'services', 'process', 'work', 'team', 'faq', 'contact']
 
 // Addresses from the previous site that now live elsewhere.
 export const REDIRECTS = { '/team': '/about', '/experience': '/about' }

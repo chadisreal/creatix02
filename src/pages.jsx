@@ -3,7 +3,7 @@ import { memo } from 'react'
 import { motion } from 'motion/react'
 import { ArrowUpRightIcon, CheckIcon, WhatsappLogoIcon } from '@phosphor-icons/react'
 import Hero from './Hero.jsx'
-import { DISCIPLINES, GlassStory, ManifestoStrip, Possibilities, ProjectBrief } from './StudioSections.jsx'
+import { DISCIPLINES, ManifestoStrip } from './StudioSections.jsx'
 import { About, Clients, Contact, Faq, Process, Results, ServiceCard, Services, Team, Testimonials, catLabel } from './sections.jsx'
 import { SERVICES, wa } from './content.js'
 import { PAGES } from './routes.js'
@@ -25,14 +25,11 @@ function OnePage({ ui }) {
     <About />
     <Clients />
     <Services />
-    <Possibilities />
     <Process />
     <Results />
     <Team />
     <Testimonials />
-    <GlassStory onTalk={ui.onTalk} />
     <Faq />
-    <ProjectBrief />
     <Contact onTalk={ui.onTalk} />
   </>
 }
