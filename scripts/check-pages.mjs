@@ -157,6 +157,55 @@ try {
   assert.equal(posted.company, undefined, 'honeypot must arrive empty')
   await page.unroute('**/api/send-lead')
 
+  // Guards on this redesign's own failure modes.
+  await page.goto(origin + '/', { waitUntil: 'networkidle' })
+  const audit = await page.evaluate(() => {
+    const lum = value => {
+      const [r, g, b] = value.match(/[\d.]+/g).slice(0, 3).map(v => {
+        const c = v / 255
+        return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
+      })
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b
+    }
+    const ratio = (a, b) => {
+      const [hi, lo] = [lum(a), lum(b)].sort((x, y) => y - x)
+      return (hi + 0.05) / (lo + 0.05)
+    }
+    const onAccent = [], tiny = []
+    for (const el of document.querySelectorAll('*')) {
+      if (!el.firstChild || el.firstChild.nodeType !== 3 || !el.textContent.trim()) continue
+      const style = getComputedStyle(el)
+      if (style.visibility === 'hidden' || !el.getClientRects().length) continue
+      // Accent-filled surfaces must carry near-black text: #fff on #34bb7b is 2.46:1.
+      if (style.backgroundColor === 'rgb(52, 187, 123)') {
+        const r = ratio(style.color, style.backgroundColor)
+        if (r < 4.5) onAccent.push(`${el.tagName}.${el.className} ${r.toFixed(2)}:1`)
+      }
+      // Below ~10px the reference's micro-labels are illegible whatever the contrast.
+      const size = parseFloat(style.fontSize)
+      if (size < 10) tiny.push(`${el.tagName}.${el.className} ${size}px`)
+    }
+    return { onAccent, tiny, geist: document.fonts.check('1em Geist'), mono: document.fonts.check('1em "Geist Mono"') }
+  })
+  assert.deepEqual(audit.onAccent, [], 'accent-filled surfaces need near-black text')
+  assert.deepEqual(audit.tiny, [], 'no rendered text below 10px')
+  assert.ok(audit.geist, 'Geist loaded rather than silently falling back')
+  assert.ok(audit.mono, 'Geist Mono loaded rather than silently falling back')
+
+  // The full-bleed hero uses 100vw and the marquees overflow by design: prove neither
+  // leaks a sideways scrollbar, at the bottom of the page as well as the top.
+  for (const width of [360, 400, 1920]) {
+    await page.setViewportSize({ width, height: 900 })
+    await page.goto(origin + '/', { waitUntil: 'networkidle' })
+    for (const where of ['top', 'bottom']) {
+      await page.evaluate(y => scrollTo({ top: y === 'bottom' ? document.body.scrollHeight : 0, behavior: 'instant' }), where)
+      await page.waitForTimeout(250)
+      const over = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)
+      assert.ok(over <= 0, `${width}px scrolls sideways by ${over}px at the ${where}`)
+    }
+  }
+  await page.setViewportSize({ width: 1440, height: 1000 })
+
   // Old addresses from the previous site.
   await page.goto(origin + '/about.html', { waitUntil: 'networkidle' })
   assert.equal(page.url(), origin + '/about')
@@ -169,7 +218,7 @@ try {
   await context.close()
 
   assert.deepEqual(problems, [], 'no console errors or hydration mismatches')
-  console.log(`Passed: ${PAGES.length} addresses on desktop and mobile (status, clean URL, title, canonical, single h1, lands on its section, no overflow, no hydration errors), one-page glide + scroll-following address, Back, service sheet, service landing page, results rail, lead form, old URLs and 404.`)
+  console.log(`Passed: ${PAGES.length} addresses on desktop and mobile (status, clean URL, title, canonical, single h1, lands on its section, no overflow, no hydration errors), one-page glide + scroll-following address, Back, service sheet, service landing page, results rail, lead form, accent contrast, 10px floor, fonts loaded, no sideways scroll at 360/400/1920, old URLs and 404.`)
 } finally {
   await browser.close()
   await new Promise(done => server.httpServer.close(done))

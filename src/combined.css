@@ -9,7 +9,6 @@ body { background-image: linear-gradient(rgb(255 255 255 / 0.02) 1px, transparen
 .hero-title { font-size: clamp(3.6rem, 6.8vw, 7rem); max-width: 11ch; line-height: 1.01; letter-spacing: -.06em; }
 .hero-title em { font-family: var(--font-serif); font-weight: 400; font-size-adjust: ex-height 0.46; color: var(--accent); }
 .hero-text { max-width: 38ch; font-size: 1.0625rem; }
-.hero-kicker { font-size: .875rem; }
 .hero-foot { left: 5%; right: calc(4% + 68px); bottom: 30px; }
 /* The rings sit to the right of the copy; the glow behind them is also the no-WebGL fallback. */
 .hero-card { background: radial-gradient(ellipse 55% 75% at 72% 47%, #10241b 0%, #0d1512 42%, var(--bg) 78%); }
@@ -104,7 +103,7 @@ body { background-image: linear-gradient(rgb(255 255 255 / 0.02) 1px, transparen
   .hero-copy { position: relative; left: auto; right: auto; bottom: auto; width: 100%; }
   .hero-copy { transform: none !important; }
   .hero-title { font-size: clamp(2.9rem, 12vw, 5.2rem); max-width: 12ch; margin-top: 18px; }
-  .hero-kicker { font-size: .8125rem; line-height: 1.5; display: block; max-width: 30ch; }
+  .hero-kicker { line-height: 1.6; display: block; max-width: 34ch; }
   .hero-kicker::before { display: none; }
   .hero-cta { flex-wrap: wrap; }
   .hero-cta .pill-lg { flex: none; font-size: .875rem; padding: 0 16px; }

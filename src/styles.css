@@ -172,8 +172,19 @@ input, select, textarea, button { font: inherit; color: inherit; }
 .rail-arrows { display: flex; gap: 8px; }
 .hp-field { position: absolute; left: -9999px; top: -9999px; }
 
-.eyebrow { display: inline-flex; align-items: center; gap: 10px; margin: 0 0 18px; font-size: 0.9375rem; font-weight: 500; color: var(--ink-3); }
-.eyebrow::before { content: ""; width: 9px; height: 9px; border-radius: 2px; background: var(--red); }
+/* Micro-labels. Mono, uppercase, wide tracking, small, with a square accent dot — the
+   reference's signature device, and half of what makes its type read as editorial: tiny
+   technical labels set against very large display type. Floored at 11px; the reference
+   goes down to 5px, which is illegible whatever the contrast ratio says. */
+.eyebrow, .hero-kicker, .clients-label, .card-cat {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+}
+.eyebrow { display: inline-flex; align-items: center; gap: 10px; margin: 0 0 18px; color: var(--ink-3); }
+.eyebrow::before { content: ""; width: 6px; height: 6px; border-radius: 2px; background: var(--accent); }
 .eyebrow-light { color: rgb(255 255 255 / 0.72); }
 
 .h2 { margin: 0; font-size: clamp(2.1rem, 1.3rem + 2.6vw, 3.8rem); font-weight: 500; line-height: 1.02; letter-spacing: -0.04em; text-wrap: balance; }
@@ -199,8 +210,8 @@ input, select, textarea, button { font: inherit; color: inherit; }
 .hero-actions { justify-self: end; display: flex; align-items: center; gap: 8px; }
 
 .hero-copy { position: absolute; left: 40px; bottom: 92px; z-index: 4; width: min(780px, 56%); }
-.hero-kicker { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 0.9375rem; color: rgb(255 255 255 / 0.8); }
-.hero-kicker::before { content: ""; width: 9px; height: 9px; border-radius: 2px; background: var(--red); }
+.hero-kicker { display: flex; align-items: center; gap: 10px; margin: 0; color: rgb(255 255 255 / 0.8); }
+.hero-kicker::before { content: ""; width: 6px; height: 6px; border-radius: 2px; background: var(--accent); }
 .hero-title { margin: 14px 0 0; font-size: clamp(2.6rem, 1.1rem + 4.4vw, 5.3rem); font-weight: 500; line-height: 0.98; letter-spacing: -0.045em; text-wrap: balance; }
 .hero-text { max-width: 48ch; margin: 22px 0 0; font-size: clamp(1rem, 0.95rem + 0.25vw, 1.1875rem); line-height: 1.55; color: rgb(255 255 255 / 0.84); }
 .hero-cta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 30px; }
@@ -257,7 +268,7 @@ input, select, textarea, button { font: inherit; color: inherit; }
 /* ---------- Clients ---------- */
 
 .clients { padding-block: clamp(56px, 8vw, 96px) clamp(24px, 4vw, 48px); }
-.clients-label { margin: 0 0 22px; text-align: center; font-size: 0.9375rem; color: var(--ink-3); }
+.clients-label { margin: 0 0 22px; text-align: center; color: var(--ink-3); }
 .clients-mask { overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); }
 .clients-track { display: flex; width: max-content; margin: 0; padding: 0; list-style: none; }
 .clients-track li { margin-right: clamp(40px, 6vw, 88px); font-size: clamp(1.4rem, 1rem + 1.4vw, 2.2rem); font-weight: 600; letter-spacing: -0.02em; text-transform: uppercase; white-space: nowrap; color: rgb(255 255 255 / 0.3); }
@@ -313,7 +324,7 @@ input, select, textarea, button { font: inherit; color: inherit; }
 .tone-photo .card-btn { background: var(--navy); color: #fff; }
 .card-img { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; transition: transform 0.9s var(--ease); }
 .tone-photo .card-btn::after { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(0deg, rgb(8 10 28 / 0.92) 8%, rgb(8 10 28 / 0.35) 60%, rgb(8 10 28 / 0.45)); }
-.card-cat { padding: 6px 11px; border-radius: 0; background: rgb(255 255 255 / 0.06); color: var(--ink-2); font-size: 0.8125rem; }
+.card-cat { padding: 6px 11px; border-radius: 0; background: var(--tint); color: var(--ink-2); }
 .tone-dark .card-cat, .tone-photo .card-cat, .sheet.tone-dark .card-cat, .sheet.tone-photo .card-cat { background: rgb(255 255 255 / 0.12); color: rgb(255 255 255 / 0.85); }
 .card-body { display: block; max-width: 36ch; padding-right: 8px; }
 .card-title { display: block; font-size: clamp(1.25rem, 1rem + 0.6vw, 1.6rem); font-weight: 500; line-height: 1.12; letter-spacing: -0.025em; }
