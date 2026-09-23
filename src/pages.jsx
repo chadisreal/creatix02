@@ -51,7 +51,7 @@ function ServicePage({ route, ui }) {
     <section className="service-detail wrap" aria-labelledby="service-points">
       <div className="service-detail-head">
         <p className="eyebrow">{discipline.label}</p>
-        <h2 id="service-points" className="h2">What you <span className="editorial-serif">get.</span></h2>
+        <h2 id="service-points" className="h2">What you <span className="liquid-glass">get.</span></h2>
         <p>{discipline.text}</p>
       </div>
       <div>
@@ -72,7 +72,7 @@ function ServicePage({ route, ui }) {
     {related.length > 0 && (
       <section className="related wrap" aria-labelledby="related-title">
         <div className="section-head">
-          <div><p className="eyebrow">More in {discipline.title.replace(/\.$/, '')}</p><h2 id="related-title" className="h2">Works well <span className="editorial-serif">together.</span></h2></div>
+          <div><p className="eyebrow">More in {discipline.title.replace(/\.$/, '')}</p><h2 id="related-title" className="h2">Works well <span className="liquid-glass">together.</span></h2></div>
           <p>Most projects combine more than one discipline. <Link to="/services">See every service</Link>.</p>
         </div>
         <ul className="bento related-bento">
@@ -115,7 +115,7 @@ function PageHero({ route, ui, eyebrow, title, serif, text, children }) {
             </nav>
           )}
           <p className="hero-kicker">{eyebrow}</p>
-          <h1 className="page-title">{title}{serif && <>{' '}<br /><span className="editorial-serif">{serif}</span></>}</h1>
+          <h1 className="page-title">{title}{serif && <>{' '}<br /><span className="liquid-glass">{serif}</span></>}</h1>
           {text && <p className="page-lead">{text}</p>}
           {children}
         </div>

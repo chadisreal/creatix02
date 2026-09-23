@@ -8,7 +8,7 @@ const server = await createServer({ server: { middlewareMode: true }, appType: '
 try {
   const { render } = await server.ssrLoadModule('/src/entry-server.jsx')
   const { PAGES, SECTIONS, SECTION_ORDER, NOT_FOUND, REDIRECTS, SITE, findRoute, headTags } = await server.ssrLoadModule('/src/routes.js')
-  const { SERVICES, TEAM, TESTIMONIALS, SERVICE_LAYOUT } = await server.ssrLoadModule('/src/content.js')
+  const { SERVICES, TEAM, TESTIMONIALS } = await server.ssrLoadModule('/src/content.js')
   const paths = new Set(PAGES.map(route => route.path))
   const text = html => html.replace(/<[^>]*>/g, '')
   const images = new Set([...SERVICES, ...TEAM, ...TESTIMONIALS, ...PAGES].flatMap(item => [item.img, item.hero]).filter(Boolean))
@@ -35,9 +35,6 @@ try {
   }
 
   for (const image of images) assert.ok(existsSync(resolve('public', image.slice(1))), `Missing image ${image}`)
-  for (const layout of Object.values(SERVICE_LAYOUT)) {
-    for (const id of Object.keys(layout)) assert.ok(SERVICES.some(service => service.id === id), `Unknown service ${id}`)
-  }
   for (const service of SERVICES) {
     assert.ok(paths.has('/' + service.slug), `No page for ${service.title}`)
     assert.ok(html['/services'].includes(`href="/${service.slug}"`), `Services page doesn't link to ${service.title}`)
@@ -54,7 +51,7 @@ try {
     assert.ok(headTags(route).includes(`rel="canonical" href="${SITE.url}/"`), `${route.path} canonical should be the home page`)
     assert.ok(route.section === 'top' || html[route.path].includes(`id="${route.section}"`), `${route.path} has no section to land on`)
   }
-  for (const phrase of ['Motion:', 'All services']) assert.ok(text(html['/']).includes(phrase), `Home missing: ${phrase}`)
+  for (const phrase of ['Motion:', 'Systems that make sense']) assert.ok(text(html['/']).includes(phrase), `Home missing: ${phrase}`)
   for (const route of PAGES.filter(r => r.page === 'service')) assert.ok(headTags(route).includes(`rel="canonical" href="${SITE.url}${route.path}"`), `${route.path} should be its own canonical page`)
   assert.ok(readFileSync('src/styles.css', 'utf8').includes('@media (max-width: 760px)'), 'Mobile layout missing')
   console.log(`Passed: ${PAGES.length} addresses + 404 rendered, one h1 each, unique IDs/titles/descriptions, ${links} internal links valid, ${images.size} images, all ${SERVICES.length} services have pages, redirects, one-page section order and canonical links.`)

@@ -105,12 +105,12 @@ try {
 
   // Arriving from search on a service page: a full page, and the nav takes you into the one page.
   await page.goto(origin + '/pos-billing-software', { waitUntil: 'networkidle' })
-  assert.equal(await page.locator('h1').innerText(), 'POS Billing Software')
+  assert.equal(await page.locator('h1').textContent(), 'POS Billing Software')
   assert.equal(await page.locator('.hero-links a[aria-current=page]').innerText(), 'Expertise')
   await page.locator('.hero-links').getByRole('link', { name: 'Work' }).click()
   await page.waitForURL(origin + '/portfolio')
   await settled(page)
-  assert.match(await page.locator('h1').innerText(), /Digital, with/)
+  assert.match(await page.locator('h1').textContent(), /Digital, with/)
   assert.ok(Math.abs(await landed(page, 'work') - 88) < 40, 'Work lands on the results section')
 
   // Client results rail: arrows move the cards and dim at either end.
@@ -213,7 +213,7 @@ try {
   assert.equal(page.url(), origin + '/about')
   // Static hosts answer unknown URLs with 404.html (Vite's preview server falls back to index.html instead).
   await page.goto(origin + '/404.html', { waitUntil: 'networkidle' })
-  assert.match(await page.locator('h1').innerText(), /moved on/)
+  assert.match(await page.locator('h1').textContent(), /moved on/)
   assert.equal(await page.locator('meta[name=robots]').getAttribute('content'), 'noindex')
   await context.close()
 

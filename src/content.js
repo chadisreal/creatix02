@@ -47,7 +47,7 @@ export const CATEGORIES = [
   { id: 'care', label: 'Digital Care' },
 ]
 
-// slug is the page URL (/slug). tone: photo | dark | light. Sizes per filter live in SERVICE_LAYOUT so every grid fills its rows.
+// slug is the page URL (/slug). tone: photo | dark | light.
 export const SERVICES = [
   {
     id: 'web', slug: 'website-development', cat: 'build', tone: 'photo', img: '/img/web-ui.jpg', title: 'Website Development',
@@ -124,15 +124,6 @@ export const SERVICES = [
     points: ['Proactive 24/7 server monitoring', 'Security updates and patches', 'Performance tuning', 'Content updates', 'Technical troubleshooting and maintenance'],
   },
 ]
-
-// s = 1x1, w = 2x1, xl = 2x2, full = 4x1. Each filter's spans add up to whole rows of 4.
-export const SERVICE_LAYOUT = {
-  all: { web: 'xl', crm: 'xl', erp: 'w', pos: 's', hrms: 's', mgmt: 's', salesforce: 's', automation: 'w', app: 's', uiux: 's', marketing: 's', design: 's', video: 'w', care: 'w' },
-  build: { web: 'w', app: 's', uiux: 's' },
-  systems: { crm: 'w', erp: 'w', pos: 's', hrms: 's', mgmt: 's', salesforce: 's' },
-  growth: { automation: 'w', video: 'w', marketing: 'w', design: 'w' },
-  care: { care: 'full' },
-}
 
 export const PROCESS = [
   { title: 'First, we listen.', text: 'Your business, your challenges, your ambition. We start with a free consultation, understand your workflow, and find the problem worth solving.' },

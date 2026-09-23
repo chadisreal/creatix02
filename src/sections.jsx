@@ -8,12 +8,12 @@ import {
   ArrowLeftIcon, ArrowRightIcon, ArrowUpRightIcon, ClockIcon, EnvelopeSimpleIcon, MapPinIcon, PlusIcon, StarIcon,
 } from '@phosphor-icons/react'
 import { useReducedMotion } from './site-motion.jsx'
-import { DisciplineStack } from './StudioSections.jsx'
+import { DISCIPLINES } from './StudioSections.jsx'
 import { EASE, press } from './ui.jsx'
 import { Link } from './router.jsx'
 import {
   ABOUT, CASES, CATEGORIES, CLIENTS, CONTACT, FAQ, IMPACT, NUMBERS, PROCESS, SERVICES,
-  SERVICE_LAYOUT, TEAM, TESTIMONIALS, TIMELINE, VALUES, wa,
+  TEAM, TESTIMONIALS, TIMELINE, VALUES, wa,
 } from './content.js'
 
 const reveal = { initial: { opacity: 0, y: 28 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true, amount: 0.25 }, transition: { duration: 0.8, ease: EASE } }
@@ -71,7 +71,7 @@ export function About() {
     <section id="about" className="about">
       <div className="wrap">
         <p className="eyebrow">The studio</p>
-        <h2 className="h2 studio-heading">Good ideas deserve<br /><span className="editorial-serif">extraordinary execution.</span></h2>
+        <h2 className="h2 studio-heading">Good ideas deserve<br /><span className="liquid-glass">extraordinary execution.</span></h2>
         <p ref={para} className="about-lead">
           {words.map((w, i) => <Word key={i} p={scrollYProgress} from={i / words.length} to={(i + 1) / words.length}>{w}</Word>)}
         </p>
@@ -178,36 +178,37 @@ function TimelineItem({ t, p, last }) {
 /* ---------- Services: filterable bento; each card opens into its own sheet ---------- */
 
 export function Services() {
-  const [view, setView] = useState('disciplines')
-  const [cat, setCat] = useState('all')
-  const layout = SERVICE_LAYOUT[cat]
-  const list = SERVICES.filter(s => layout[s.id])
   return (
     <section id="services" className="services wrap">
       <p className="eyebrow">Our expertise</p>
       <div className="section-head">
-        <motion.h2 className="h2" {...reveal}>Many disciplines.<br /><span className="editorial-serif">One clear vision.</span></motion.h2>
-        <motion.p {...reveal}>Everything your business needs to look better, work smarter, and move forward. Explore a discipline or find your next solution.</motion.p>
+        <motion.h2 className="h2" {...reveal}>Many disciplines.<br /><span className="liquid-glass">One clear vision.</span></motion.h2>
+        <motion.p {...reveal}>Everything your business needs to look better, work smarter, and move forward. Every service we offer sits under one of these four.</motion.p>
       </div>
-      <div className="service-view" role="group" aria-label="Service display">
-        <button type="button" aria-pressed={view === 'disciplines'} onClick={() => setView('disciplines')}>By discipline</button>
-        <button type="button" aria-pressed={view === 'catalogue'} onClick={() => setView('catalogue')}>All services <span>{SERVICES.length}</span></button>
-      </div>
-      {view === 'disciplines' ? <DisciplineStack /> : <>
-      <div className="tabs" role="group" aria-label="Filter services">
-        {CATEGORIES.map(c => (
-          <button key={c.id} type="button" aria-pressed={cat === c.id} className={'tab' + (cat === c.id ? ' is-on' : '')} onClick={() => setCat(c.id)}>
-            {cat === c.id && <motion.span layoutId="tab-pill" className="tab-pill" transition={{ type: 'spring', stiffness: 500, damping: 40 }} />}
-            <span>{c.label}</span>
-          </button>
+      <ol className="disciplines">
+        {DISCIPLINES.map((d, i) => (
+          <motion.li
+            key={d.title}
+            className="discipline-row"
+            {...reveal}
+            transition={{ ...reveal.transition, delay: i * 0.06 }}
+          >
+            <span className="discipline-index" aria-hidden="true">[{String(i + 1).padStart(2, '0')}]</span>
+            <span className="discipline-rule" aria-hidden="true" />
+            <h3>{d.title.replace(/\.$/, '')}</h3>
+            <div className="discipline-detail">
+              <p className="discipline-label">{d.label}</p>
+              <p>{d.text}</p>
+              <ul className="discipline-services">
+                {d.ids.map(id => {
+                  const s = SERVICES.find(x => x.id === id)
+                  return <li key={id}><Link to={'/' + s.slug}>{s.title}<ArrowUpRightIcon size={13} weight="bold" /></Link></li>
+                })}
+              </ul>
+            </div>
+          </motion.li>
         ))}
-      </div>
-      <motion.ul className="bento" layout>
-        <AnimatePresence mode="popLayout" initial={false}>
-          {list.map(s => <ServiceCard key={s.id} s={s} size={layout[s.id]} />)}
-        </AnimatePresence>
-      </motion.ul>
-      </>}
+      </ol>
     </section>
   )
 }
@@ -246,7 +247,7 @@ export function Process() {
   return (
     <section id="process" className="process wrap">
       <div className="section-head">
-        <div><p className="eyebrow">How we get there</p><motion.h2 className="h2" {...reveal}>Big thinking.<br /><span className="editorial-serif">Clear steps.</span></motion.h2><p className="process-intro">We keep the process collaborative, the decisions clear, and you in the loop.</p><span className="process-emblem" aria-hidden="true">✳</span></div>
+        <div><p className="eyebrow">How we get there</p><motion.h2 className="h2" {...reveal}>Big thinking.<br /><span className="liquid-glass">Clear steps.</span></motion.h2><p className="process-intro">We keep the process collaborative, the decisions clear, and you in the loop.</p><span className="process-emblem" aria-hidden="true">✳</span></div>
       </div>
       <ol ref={ref} className="steps">
         {PROCESS.map((s, i) => <Step key={s.title} s={s} i={i} p={scrollYProgress} />)}
@@ -477,7 +478,7 @@ export function Faq() {
   const [open, setOpen] = useState(0)
   return (
     <section id="faq" className="faq wrap" aria-labelledby="faq-title">
-      <div><p className="eyebrow">A few good questions</p><motion.h2 id="faq-title" className="h2" {...reveal}>Before we<br /><span className="editorial-serif">begin.</span></motion.h2></div>
+      <div><p className="eyebrow">A few good questions</p><motion.h2 id="faq-title" className="h2" {...reveal}>Before we<br /><span className="liquid-glass">begin.</span></motion.h2></div>
       <ul className="faq-list">
         {FAQ.map((f, i) => (
           <li key={f.q} className={open === i ? 'is-open' : ''}>
@@ -535,7 +536,7 @@ export function Contact({ onTalk }) {
         <img className="contact-photo" src="/img/team-collab.jpg" alt="" loading="lazy" />
         <div className="contact-scrim" />
         <div className="contact-copy">
-          <motion.h2 className="h2" {...reveal}>A conversation.<br /><span className="editorial-serif">A new possibility.</span></motion.h2>
+          <motion.h2 className="h2" {...reveal}>A conversation.<br /><span className="liquid-glass">A new possibility.</span></motion.h2>
           <p>Talk to Creatix Innovation about your next project, website overhaul or business automation system.</p>
           <ul className="contact-meta">
             <li><MapPinIcon size={18} weight="bold" />{CONTACT.location}</li>
