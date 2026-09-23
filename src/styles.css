@@ -285,20 +285,27 @@ input, select, textarea, button { font: inherit; color: inherit; }
    The card is a flex column justified to the end, so the copy sits low and the base row
    hangs under it — and on mobile, where the base row is hidden, the copy lands 26px off
    the bottom, which is the `copyAtBottom` assertion. */
+/* ---------- Hero ---------- */
+/* A full-bleed photographic stage at viewport height, one frame per service pillar.
+   The gradient under the image is also the fallback if a frame never loads.
+   The card is a flex column justified to the end, so the copy sits low and the base row
+   hangs under it — and on mobile, where the base row is hidden, the copy lands 26px off
+   the bottom, which is what check-hero.mjs asserts. */
 .hero { height: 100dvh; min-height: 680px; padding: 0; }
 .hero-card {
   position: relative; height: 100%; overflow: hidden; isolation: isolate;
   display: flex; flex-direction: column; justify-content: flex-end;
   padding-bottom: 26px; color: #fff;
-  background: radial-gradient(ellipse 55% 75% at 72% 47%, #10241b 0%, #0d1512 42%, var(--bg) 78%);
+  background: radial-gradient(ellipse 60% 80% at 70% 45%, #10241b 0%, #0d1512 45%, var(--bg) 80%);
 }
-.hero-rings { --rings-x: .74; --rings-y: .47; --rings-size: .54; --rings-cell: 4; --rings-line: .3; }
+.hero-stage { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+.hero-shot { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: brightness(0.42) saturate(0.85); will-change: opacity, transform; }
 .hero-scrim {
   position: absolute; inset: 0; z-index: 1; pointer-events: none;
   background:
-    linear-gradient(90deg, #0b0b0be6 0%, #0b0b0bab 34%, #0b0b0b00 62%),
-    linear-gradient(0deg, #0b0b0bcc, transparent 34%),
-    linear-gradient(180deg, #0b0b0b73, transparent 20%);
+    linear-gradient(90deg, #0b0b0bfa 0%, #0b0b0be0 34%, #0b0b0b8c 66%, #0b0b0b4d 100%),
+    linear-gradient(0deg, #0b0b0bf7 0%, #0b0b0b8c 28%, transparent 56%),
+    linear-gradient(180deg, #0b0b0ba6, transparent 24%);
 }
 
 .hero-nav { position: absolute; top: 0; left: 0; right: 0; z-index: 5; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 20px; padding: 22px var(--gutter) 0; }
@@ -307,8 +314,7 @@ input, select, textarea, button { font: inherit; color: inherit; }
 .hero-links a:hover { background: rgb(255 255 255 / 0.12); color: #fff; }
 .hero-links a[aria-current="page"] { background: rgb(255 255 255 / 0.15); color: #fff; }
 .hero-actions { justify-self: end; display: flex; align-items: center; gap: 8px; }
-/* Frosted glass over a moving canvas re-blurs every frame; a flat tint reads the same and costs nothing. */
-.hero .hero-links, .hero .pill-glass { backdrop-filter: none; -webkit-backdrop-filter: none; background: rgb(255 255 255 / 0.1); }
+.hero .pill-glass { backdrop-filter: blur(14px) saturate(150%); -webkit-backdrop-filter: blur(14px) saturate(150%); }
 .hero .pill-red { background: var(--accent); color: var(--bg); box-shadow: none; }
 .hero .pill-red:hover { background: #4fd396; }
 
@@ -319,11 +325,42 @@ input, select, textarea, button { font: inherit; color: inherit; }
 .hero-text { max-width: 44ch; margin: 24px 0 0; font-size: clamp(1rem, 0.95rem + 0.25vw, 1.125rem); line-height: 1.6; color: rgb(255 255 255 / 0.78); }
 .hero-cta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 32px; }
 
-.hero-base { position: relative; z-index: 4; display: flex; align-items: flex-end; justify-content: space-between; gap: 34px; margin-top: 46px; padding-inline: var(--gutter); }
-.hero-foot { flex: 1; display: flex; gap: 20px; }
-.hero-foot a { flex: 1; display: flex; gap: 10px; padding-top: 12px; border-top: 1px solid rgb(255 255 255 / 0.18); color: rgb(255 255 255 / 0.7); font-size: 0.875rem; text-decoration: none; transition: border-color 0.25s, color 0.25s; }
-.hero-foot a span { font-family: var(--font-mono); font-size: 0.625rem; letter-spacing: 0.12em; color: var(--accent); }
-.hero-foot a:hover { border-color: var(--accent); color: #fff; }
+/* Base row: what this frame is showing, the dial, and the pillar ticks. */
+.hero-base {
+  position: relative; z-index: 4; display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: clamp(18px, 2.4vw, 30px) clamp(20px, 3vw, 44px);
+  align-items: end; margin-top: clamp(28px, 4vw, 52px); padding-inline: var(--gutter);
+}
+.hero-slide-copy { min-width: 0; }
+.hero-slide-index { font-family: var(--font-mono); font-size: 0.625rem; letter-spacing: 0.14em; color: var(--accent); }
+.hero-slide-title { margin: 6px 0 4px; font-size: clamp(1.2rem, 2.2vw, 1.85rem); font-weight: 900; text-transform: uppercase; line-height: 1; letter-spacing: -0.03em; }
+.hero-slide-label { margin: 0; color: rgb(255 255 255 / 0.6); }
+
+.hero-dial { justify-self: end; display: flex; align-items: center; gap: clamp(10px, 1.5vw, 18px); }
+.hero-count { font-family: var(--font-mono); font-size: 0.6875rem; letter-spacing: 0.14em; color: rgb(255 255 255 / 0.7); font-variant-numeric: tabular-nums; }
+.hero-count i { font-style: normal; color: var(--accent); }
+.hero-arrows { display: flex; gap: 8px; }
+.hero-slide-go { display: inline-flex; align-items: center; gap: 7px; padding-bottom: 3px; border-bottom: 1px solid rgb(255 255 255 / 0.3); color: #fff; font-family: var(--font-mono); font-size: 0.625rem; text-transform: uppercase; letter-spacing: 0.16em; text-decoration: none; transition: border-color 0.25s, color 0.25s; }
+.hero-slide-go:hover { border-color: var(--accent); color: var(--accent); }
+
+/* One tick per pillar. The active tick fills over the hold time, so the slideshow shows
+   its own clock instead of changing without warning. */
+.hero-foot { grid-column: 1 / -1; display: flex; gap: clamp(10px, 1.4vw, 20px); }
+.hero-tick {
+  position: relative; flex: 1; display: flex; align-items: baseline; gap: 10px;
+  padding: 12px 0 0; border: 0; border-top: 1px solid rgb(255 255 255 / 0.18);
+  background: none; color: rgb(255 255 255 / 0.55); font: inherit; font-size: 0.875rem;
+  text-align: left; cursor: pointer; transition: color 0.3s, border-color 0.3s;
+}
+.hero-tick span { font-family: var(--font-mono); font-size: 0.625rem; letter-spacing: 0.12em; }
+.hero-tick:hover { color: #fff; border-color: rgb(255 255 255 / 0.45); }
+.hero-tick.is-on { color: #fff; }
+.hero-tick i { position: absolute; top: -1px; left: 0; height: 1px; width: 100%; background: var(--accent); transform: scaleX(0); transform-origin: left; }
+.hero-tick.is-on i { animation: tick-fill linear forwards; }
+@keyframes tick-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+/* Paused or reduced: hold the rule at full width rather than leaving it empty. */
+.motion-paused .hero-tick.is-on i { animation: none; transform: scaleX(1); }
 
 .hero-pause { position: absolute; right: var(--gutter); top: 96px; z-index: 5; width: 40px; height: 40px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%; background: rgb(255 255 255 / 0.08); color: rgb(255 255 255 / 0.72); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.2); cursor: pointer; transition: background-color 0.2s, color 0.2s; -webkit-tap-highlight-color: transparent; }
 .hero-pause:hover { background: rgb(255 255 255 / 0.16); color: #fff; }
@@ -332,8 +369,8 @@ input, select, textarea, button { font: inherit; color: inherit; }
   .hero-links { display: none; }
   .hero-nav { grid-template-columns: 1fr auto; }
   .hero-nav .show-sm { display: inline-flex !important; }
-  .hero-copy { width: min(700px, 76%); }
-  .hero-rings { --rings-x: .64; --rings-y: .3; --rings-size: .42; }
+  .hero-copy { width: min(700px, 78%); }
+  .hero-tick { font-size: 0.8125rem; }
 }
 @media (max-width: 760px) {
   .hero { min-height: 640px; }
@@ -349,8 +386,10 @@ input, select, textarea, button { font: inherit; color: inherit; }
   .hero-cta { margin-top: 24px; }
   .hero-cta .pill-lg { flex: none; font-size: 0.875rem; padding: 0 16px; }
   .hero-pause { top: 78px; right: 18px; }
-  .hero-rings { --rings-x: .5; --rings-y: .31; --rings-size: .6; --rings-cell: 3; --rings-line: .26; }
+  .hero-shot { filter: brightness(0.38) saturate(0.85); }
 }
+
+/* Frosted glass over a moving canvas re-blurs every frame; a flat tint reads the same and costs nothing. */
 
 /* ---------- Frosted glass tiles (contact) ---------- */
 

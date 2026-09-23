@@ -103,11 +103,14 @@ try {
   await page.waitForURL(url => url.pathname !== '/pos-billing-software')
   assert.equal(await page.evaluate(() => scrollY), behind, 'closing the sheet keeps your place')
 
+  // The hero's own in-page link glides into the page. It used to be four workflow steps
+  // pointing at #process; the carousel's slide controls took that row, so this is now the
+  // "See the work" link beside the frame counter.
   await page.goto(origin + '/', { waitUntil: 'networkidle' })
-  await page.locator('.hero-foot').getByRole('link', { name: /Design/ }).click()
+  await page.locator('.hero-dial').getByRole('link', { name: /See the work/ }).click()
   await page.waitForURL(origin + '/services')
   await settled(page)
-  assert.ok(Math.abs(await landed(page, 'process')) < 150, 'hero step links land on the process section')
+  assert.ok(Math.abs(await landed(page, 'services') - 88) < 40, 'the hero link lands on the services section')
 
   // Arriving from search on a service page: a full page, and the nav takes you into the one page.
   await page.goto(origin + '/pos-billing-software', { waitUntil: 'networkidle' })
