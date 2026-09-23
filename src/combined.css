@@ -38,7 +38,7 @@ body { background-image: linear-gradient(rgb(255 255 255 / 0.02) 1px, transparen
 .process { display: grid; grid-template-columns: 1fr 1fr; gap: 90px; padding-block: 115px; }
 .process .section-head { display: block; margin: 0; position: sticky; top: 120px; align-self: start; }
 .process-intro { color: var(--ink-2); max-width: 30ch; font-size: 1.0625rem; margin: 26px 0 0; }
-.process-emblem { display: inline-block; font-size: 8rem; color: #b49bce; line-height: 1.4; }
+.process-emblem { display: inline-block; font-size: 8rem; color: var(--accent); line-height: 1.4; }
 .process .steps { display: flex; flex-direction: column; gap: 0; margin: 0; padding: 0; }
 .process .step { padding: 32px 0 38px 60px; border-top: 1px solid var(--line); position: relative; }
 .process .step-n { position: absolute; left: 0; top: 30px; width: 36px; height: 36px; font-size: .875rem; }
@@ -66,9 +66,9 @@ body { background-image: linear-gradient(rgb(255 255 255 / 0.02) 1px, transparen
   .process .step { padding-left: 52px; }
   .process .step h3 { font-size: 1.4rem; }
   .hero { height: auto; min-height: 0; padding: 8px; }
-  .hero-card { height: auto; min-height: max(620px, calc(100svh - 16px)); display: flex; flex-direction: column; justify-content: flex-end; padding: 110px 22px 30px; background: radial-gradient(ellipse 90% 45% at 50% 30%, #35274f 0%, #261c39 45%, var(--navy) 80%); }
+  .hero-card { height: auto; min-height: max(620px, calc(100svh - 16px)); display: flex; flex-direction: column; justify-content: flex-end; padding: 110px 22px 30px; background: radial-gradient(ellipse 90% 45% at 50% 30%, #10241b 0%, #0d1512 45%, var(--navy) 80%); }
   .hero-rings { --rings-x: .5; --rings-y: .31; --rings-size: .6; --rings-cell: 3; --rings-line: .26; }
-  .hero-scrim { background: linear-gradient(0deg, #130e20f2 0%, #130e20c4 42%, #130e2000 70%), linear-gradient(180deg, #130e2080, transparent 16%); }
+  .hero-scrim { background: linear-gradient(0deg, #0b0b0bf2 0%, #0b0b0bc4 42%, #0b0b0b00 70%), linear-gradient(180deg, #0b0b0b80, transparent 16%); }
   .hero-pause { right: 20px; bottom: auto; top: 84px; width: 40px; height: 40px; background: transparent; color: rgb(255 255 255 / .62); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .16); }
   .hero-nav { padding: 18px; gap: 8px; }
   .hero-nav .brand { font-size: 1rem; }
@@ -93,9 +93,9 @@ main:focus { outline: none; }
 .page-hero { padding: 16px; }
 .page-hero-card { position: relative; isolation: isolate; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; min-height: min(720px, 86svh); padding: 150px 5% clamp(48px, 6vw, 84px); border-radius: 0; background: var(--navy); color: #fff; }
 .page-hero-img { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; }
-.page-hero-card::after { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, #130e20e0, #130e2040 88%), linear-gradient(0deg, #120d24d0, transparent 70%), linear-gradient(180deg, #130e2066, transparent 24%); }
-.page-hero .pill-red { background: #e1d1fa; color: #251a38; box-shadow: none; }
-.page-hero .pill-red:hover { background: #efe5ff; }
+.page-hero-card::after { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, #0b0b0be0, #0b0b0b40 88%), linear-gradient(0deg, #0b0b0bd0, transparent 70%), linear-gradient(180deg, #0b0b0b66, transparent 24%); }
+.page-hero .pill-red { background: var(--accent); color: var(--bg); box-shadow: none; }
+.page-hero .pill-red:hover { background: #4fd396; }
 .page-hero-copy { max-width: 900px; }
 .crumbs { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 26px; padding: 0; list-style: none; font-size: .875rem; color: rgb(255 255 255 / 0.62); }
 .crumbs li + li::before { content: "/"; margin-right: 8px; opacity: .6; }
@@ -111,7 +111,7 @@ main:focus { outline: none; }
 .service-points { margin: 0; padding: 0; list-style: none; }
 .service-points li { display: flex; gap: 18px; padding: 24px 0; border-top: 1px solid var(--line); font-size: clamp(1.125rem, 1rem + .5vw, 1.45rem); line-height: 1.35; letter-spacing: -.02em; }
 .service-points li:last-child { border-bottom: 1px solid var(--line); }
-.service-points svg { flex: none; margin-top: 4px; color: #9271b4; }
+.service-points svg { flex: none; margin-top: 4px; color: var(--accent); }
 .service-built { margin: 44px 0 16px; font-size: .9375rem; font-weight: 500; color: var(--ink-3); }
 .related { padding-bottom: 20px; }
 .related .section-head a { color: var(--ink); }
