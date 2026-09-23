@@ -1,203 +1,102 @@
 // Page sections. pages.jsx puts these together.
+//
+// Everything visual composes from the primitives in ui.jsx: Display for masked two-tone
+// headings, MicroLabel for the mono labels, Marquee for the running bands, Frame for
+// imagery, Counter for figures. Decorative loops and hovers are CSS, not motion
+// components, so `.motion-paused *` switches them all off in one rule.
 import { forwardRef, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import {
-  motion, AnimatePresence, animate, useInView, useMotionValue, useMotionValueEvent,
-  useScroll, useSpring, useTransform, useVelocity,
+  motion, animate, useMotionValue, useMotionValueEvent, useScroll, useSpring, useTransform,
 } from 'motion/react'
 import {
-  ArrowLeftIcon, ArrowRightIcon, ArrowUpRightIcon, ClockIcon, EnvelopeSimpleIcon, MapPinIcon, PlusIcon, StarIcon,
+  ArrowLeftIcon, ArrowRightIcon, ArrowUpRightIcon, ClockIcon, EnvelopeSimpleIcon, MapPinIcon, PlusIcon,
 } from '@phosphor-icons/react'
 import { useReducedMotion } from './site-motion.jsx'
 import { DISCIPLINES } from './StudioSections.jsx'
-import { EASE, press } from './ui.jsx'
+import { Counter, Display, Frame, Marquee, MicroLabel, TOKEN, press, reveal, stagger } from './ui.jsx'
 import { Link } from './router.jsx'
 import {
   ABOUT, CASES, CATEGORIES, CLIENTS, CONTACT, FAQ, IMPACT, NUMBERS, PROCESS, SERVICES,
-  TEAM, TESTIMONIALS, TIMELINE, VALUES, wa,
+  TEAM, TESTIMONIALS, VALUES, wa,
 } from './content.js'
 
-const reveal = { initial: { opacity: 0, y: 28 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true, amount: 0.25 }, transition: { duration: 0.8, ease: EASE } }
+const pad = n => String(n).padStart(2, '0')
 
-/* ---------- Client names: a strip that runs with your scroll ---------- */
+/* ---------- Clients: a band of names running past ---------- */
 
 export function Clients() {
-  const reduce = useReducedMotion()
-  const track = useRef(null)
-  const inView = useInView(track)
-  const x = useMotionValue(0)
-  const { scrollY } = useScroll()
-  const velocity = useVelocity(scrollY)
-  const dir = useRef(-1)
-  // Runs only while the strip is on screen, so the rest of the page stays idle.
-  useEffect(() => {
-    if (reduce || !inView) return
-    let frame = 0, last = 0
-    const tick = now => {
-      const dt = last ? Math.min(now - last, 64) : 0
-      last = now
-      const v = velocity.get()
-      if (v > 5) dir.current = -1
-      else if (v < -5) dir.current = 1
-      const speed = 50 + Math.min(900, Math.abs(v)) * 0.35
-      const half = track.current.scrollWidth / 2
-      let next = x.get() + dir.current * speed * (dt / 1000)
-      if (next <= -half) next += half
-      if (next > 0) next -= half
-      x.set(next)
-      frame = requestAnimationFrame(tick)
-    }
-    frame = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(frame)
-  }, [reduce, inView])
   return (
     <section className="clients" aria-label="Clients">
-      <p className="clients-label">Trusted by industry leaders worldwide</p>
-      <div className="clients-mask">
-        <motion.ul ref={track} className="clients-track" style={{ x }}>
-          {[...CLIENTS, ...CLIENTS].map((c, i) => <li key={i} aria-hidden={i >= CLIENTS.length}>{c}</li>)}
-        </motion.ul>
-      </div>
+      <MicroLabel className="clients-label" dot={false}>Trusted by industry leaders</MicroLabel>
+      <Marquee speed={38} label={'Clients: ' + CLIENTS.join(', ')}>
+        <ul className="clients-track">
+          {CLIENTS.map(c => <li key={c}>{c}<i aria-hidden="true" /></li>)}
+        </ul>
+      </Marquee>
     </section>
   )
 }
 
-/* ---------- About: paragraph that fills in as you read, photo strip, numbers, timeline ---------- */
+/* ---------- About: a paragraph that fills in as you read it ---------- */
 
 export function About() {
   const para = useRef(null)
   const { scrollYProgress } = useScroll({ target: para, offset: ['start 85%', 'end 45%'] })
   const words = ABOUT.split(' ')
   return (
-    <section id="about" className="about">
-      <div className="wrap">
-        <p className="eyebrow">The studio</p>
-        <h2 className="h2 studio-heading">Good ideas deserve<br /><span className="liquid-glass">extraordinary execution.</span></h2>
+    <section id="about" className="about wash">
+      <div className="wrap about-head">
+        <div>
+          <MicroLabel>The studio</MicroLabel>
+          <Display className="studio-heading" lines={['Good ideas deserve', 'extraordinary execution.']} />
+        </div>
         <p ref={para} className="about-lead">
-          {words.map((w, i) => <Word key={i} p={scrollYProgress} from={i / words.length} to={(i + 1) / words.length}>{w}</Word>)}
+          {words.map((w, i) => (
+            <Word key={i} p={scrollYProgress} from={i / words.length} to={(i + 1) / words.length}>{w}</Word>
+          ))}
         </p>
       </div>
-      <Strip />
-      <div className="wrap">
+
+      <div className="wrap about-body">
+        <Frame className="about-photo" src="/img/team-collab.jpg" alt="The Creatix Innovation team at work" glow ratio="4 / 3" />
         <ul className="numbers">
-          {NUMBERS.map(n => (
-            <motion.li key={n.label} {...reveal}>
-              <strong><Count to={n.value} />{n.suffix}</strong>
-              <span>{n.label}</span>
+          {NUMBERS.map((n, i) => (
+            <motion.li key={n.label} {...stagger(i)}>
+              <strong><Counter to={n.value} suffix={n.suffix} /></strong>
+              <MicroLabel as="span" dot={false}>{n.label}</MicroLabel>
             </motion.li>
           ))}
         </ul>
-        <Timeline />
       </div>
     </section>
   )
 }
 
+// Each word lifts from near-invisible to full as the paragraph passes the reading line.
 function Word({ p, from, to, children }) {
   const reduce = useReducedMotion()
   const opacity = useTransform(p, [from, to], [0.16, 1])
   return <><motion.span style={reduce ? undefined : { opacity }}>{children}</motion.span>{' '}</>
 }
 
-function Count({ to }) {
-  const ref = useRef(null)
-  const inView = useInView(ref, { once: true, amount: 0.8 })
-  const reduce = useReducedMotion()
-  const decimals = String(to).includes('.') ? 1 : 0
-  useEffect(() => {
-    if (!inView) return
-    if (reduce) { ref.current.textContent = to.toFixed(decimals); return }
-    const c = animate(0, to, { duration: 1.6, ease: [0.16, 1, 0.3, 1], onUpdate: v => { if (ref.current) ref.current.textContent = v.toFixed(decimals) } })
-    return () => c.stop()
-  }, [inView, reduce, to, decimals])
-  return <span ref={ref}>0</span>
-}
-
-const STRIP = ['/img/team-collab.jpg', '/img/web-ui.jpg', '/img/build.jpg', '/img/automate.jpg', '/img/care.jpg', '/img/circuit.jpg']
-
-// Slides sideways with scroll and leans into fast scrolling, like a strip of film.
-function Strip() {
-  const ref = useRef(null)
-  const reduce = useReducedMotion()
-  const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end start'] })
-  const x = useTransform(scrollYProgress, [0, 1], ['6%', '-30%'])
-  const { scrollY } = useScroll()
-  const v = useSpring(useVelocity(scrollY), { stiffness: 260, damping: 40, restDelta: 1 })
-  const skewX = useTransform(v, [-3000, 0, 3000], [7, 0, -7], { clamp: true })
-  // The lean settles for a couple of seconds after any scroll; only draw it while the strip is on screen.
-  const inView = useInView(ref, { margin: '20% 0px' })
-  return (
-    <div ref={ref} className="strip" aria-hidden="true">
-      <motion.ul className="strip-track" style={reduce ? undefined : { x, skewX: inView ? skewX : 0 }}>
-        {STRIP.map(src => <li key={src}><img src={src} alt="" loading="lazy" draggable={false} /></li>)}
-      </motion.ul>
-    </div>
-  )
-}
-
-function Timeline() {
-  const ref = useRef(null)
-  const reduce = useReducedMotion()
-  const { scrollYProgress } = useScroll({ target: ref, offset: ['start 85%', 'start 40%'] })
-  return (
-    <div ref={ref} className="timeline">
-      <h3>Our evolution</h3>
-      <div className="timeline-rail"><motion.span style={{ scaleX: reduce ? 1 : scrollYProgress }} /></div>
-      <ol>
-        {TIMELINE.map((t, i) => <TimelineItem key={t.year} t={t} p={scrollYProgress} last={i === TIMELINE.length - 1} />)}
-      </ol>
-    </div>
-  )
-}
-
-function TimelineItem({ t, p, last }) {
-  const reduce = useReducedMotion()
-  // Light each year when the drawn line actually reaches its dot, wherever the grid put it.
-  const ref = useRef(null)
-  const [at, setAt] = useState(1)
-  useLayoutEffect(() => {
-    const li = ref.current, ol = li.parentElement
-    const measure = () => setAt((li.offsetLeft + (last ? li.offsetWidth - 12 : 0)) / ol.offsetWidth)
-    measure()
-    const ro = new ResizeObserver(measure)
-    ro.observe(ol)
-    return () => ro.disconnect()
-  }, [last])
-  const on = useTransform(p, v => (v >= at - 0.01 ? 1 : 0))
-  const lit = useSpring(on, { stiffness: 400, damping: 24 })
-  const scale = useTransform(lit, [0, 1], [0.5, 1])
-  const opacity = useTransform(lit, [0, 1], [0.45, 1])
-  return (
-    <motion.li ref={ref} style={reduce ? undefined : { opacity }}>
-      <motion.i style={reduce ? undefined : { scale }} />
-      <strong>{t.year}</strong>
-      <span>{t.text}</span>
-    </motion.li>
-  )
-}
-
-/* ---------- Services: filterable bento; each card opens into its own sheet ---------- */
+/* ---------- Services: the four disciplines as numbered rows ---------- */
 
 export function Services() {
   return (
     <section id="services" className="services wrap">
-      <p className="eyebrow">Our expertise</p>
+      <MicroLabel>Our expertise</MicroLabel>
       <div className="section-head">
-        <motion.h2 className="h2" {...reveal}>Many disciplines.<br /><span className="liquid-glass">One clear vision.</span></motion.h2>
+        <Display lines={['Many disciplines.', 'One clear vision.']} />
         <motion.p {...reveal}>Everything your business needs to look better, work smarter, and move forward. Every service we offer sits under one of these four.</motion.p>
       </div>
       <ol className="disciplines">
         {DISCIPLINES.map((d, i) => (
-          <motion.li
-            key={d.title}
-            className="discipline-row"
-            {...reveal}
-            transition={{ ...reveal.transition, delay: i * 0.06 }}
-          >
-            <span className="discipline-index" aria-hidden="true">[{String(i + 1).padStart(2, '0')}]</span>
+          <motion.li key={d.title} className="discipline-row" {...stagger(i)}>
+            <span className="discipline-index" aria-hidden="true">[{pad(i + 1)}]</span>
             <span className="discipline-rule" aria-hidden="true" />
             <h3>{d.title.replace(/\.$/, '')}</h3>
             <div className="discipline-detail">
-              <p className="discipline-label">{d.label}</p>
+              <MicroLabel as="p" dot={false} className="discipline-label">{d.label}</MicroLabel>
               <p>{d.text}</p>
               <ul className="discipline-services">
                 {d.ids.map(id => {
@@ -215,17 +114,10 @@ export function Services() {
 
 export const catLabel = id => CATEGORIES.find(c => c.id === id)?.label
 
+// Still used by the service pages for their related-services grid.
 export const ServiceCard = forwardRef(function ServiceCard({ s, size }, ref) {
   return (
-    <motion.li
-      ref={ref}
-      layout
-      className={`card tone-${s.tone} size-${size}`}
-      initial={{ opacity: 0, scale: 0.92 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.92 }}
-      transition={{ type: 'spring', stiffness: 360, damping: 34 }}
-    >
+    <motion.li ref={ref} className={`card tone-${s.tone} size-${size}`} {...reveal}>
       <Link to={'/' + s.slug} className="card-btn">
         {s.img && <img className="card-img" src={s.img} alt="" loading="lazy" draggable={false} />}
         <span className="card-cat">{catLabel(s.cat)}</span>
@@ -239,15 +131,17 @@ export const ServiceCard = forwardRef(function ServiceCard({ s, size }, ref) {
   )
 })
 
-/* ---------- Process: a line that draws as you read the steps ---------- */
+/* ---------- Process: numbered steps that light as you read down them ---------- */
 
 export function Process() {
   const ref = useRef(null)
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start 80%', 'end 55%'] })
   return (
-    <section id="process" className="process wrap">
-      <div className="section-head">
-        <div><p className="eyebrow">How we get there</p><motion.h2 className="h2" {...reveal}>Big thinking.<br /><span className="liquid-glass">Clear steps.</span></motion.h2><p className="process-intro">We keep the process collaborative, the decisions clear, and you in the loop.</p><span className="process-emblem" aria-hidden="true">✳</span></div>
+    <section id="process" className="process wrap wash">
+      <div className="process-head">
+        <MicroLabel>How we get there</MicroLabel>
+        <Display lines={['Big thinking.', 'Clear steps.']} />
+        <p className="process-intro">We keep the process collaborative, the decisions clear, and you in the loop.</p>
       </div>
       <ol ref={ref} className="steps">
         {PROCESS.map((s, i) => <Step key={s.title} s={s} i={i} p={scrollYProgress} />)}
@@ -260,19 +154,21 @@ function Step({ s, i, p }) {
   const reduce = useReducedMotion()
   const on = useTransform(p, v => (v >= i / (PROCESS.length - 1) - 0.04 ? 1 : 0))
   const lit = useSpring(on, { stiffness: 300, damping: 30 })
-  const bg = useTransform(lit, [0, 1], ['#EEF0F3', '#D22B1B'])
-  const color = useTransform(lit, [0, 1], ['#0D1024', '#FFFFFF'])
-  const y = useTransform(lit, [0, 1], [12, 0])
+  // Near-black on the accent, never white: #fff on #34bb7b is 2.46:1.
+  const bg = useTransform(lit, [0, 1], [TOKEN.surface, TOKEN.accent])
+  const color = useTransform(lit, [0, 1], [TOKEN.muted, TOKEN.bg])
+  const rule = useTransform(lit, [0, 1], [0.12, 1])
   return (
-    <motion.li className="step" style={reduce ? undefined : { y }}>
-      <motion.span className="step-n" style={{ backgroundColor: bg, color }}>{i + 1}</motion.span>
+    <motion.li className="step" {...stagger(i)}>
+      <motion.span className="step-n" style={reduce ? undefined : { backgroundColor: bg, color }}>{pad(i + 1)}</motion.span>
+      <motion.span className="step-rule" aria-hidden="true" style={reduce ? undefined : { scaleX: rule }} />
       <h3>{s.title}</h3>
       <p>{s.text}</p>
     </motion.li>
   )
 }
 
-/* ---------- Results: throwable rail of before/after cards ---------- */
+/* ---------- Work: a rail of client outcomes you can throw ---------- */
 
 export function Results() {
   const [after, setAfter] = useState(true)
@@ -280,6 +176,7 @@ export function Results() {
   const rail = useRef(null)
   const x = useMotionValue(0)
   const [bounds, setBounds] = useState({ left: 0, step: 1 })
+  const [active, setActive] = useState(0)
   const dragged = useRef(0)
 
   useLayoutEffect(() => {
@@ -293,24 +190,25 @@ export function Results() {
     return () => ro.disconnect()
   }, [])
 
-  // Momentum projection: land on the card nearest to where the throw would have come to rest.
+  // Momentum projection: land on the card nearest where the throw would have come to rest.
   const snap = t => Math.max(bounds.left, Math.min(0, Math.round(t / bounds.step) * bounds.step))
-  // Next moves the rail left (x goes negative), previous moves it back toward 0.
   const go = dir => animate(x, snap(x.get() - dir * bounds.step), { type: 'spring', stiffness: 300, damping: 34 })
 
-  // Dim an arrow once the rail has nowhere further to go in that direction.
   const [edge, setEdge] = useState('start')
-  useMotionValueEvent(x, 'change', v => setEdge(v >= -1 ? 'start' : v <= bounds.left + 1 ? 'end' : 'middle'))
+  useMotionValueEvent(x, 'change', v => {
+    setEdge(v >= -1 ? 'start' : v <= bounds.left + 1 ? 'end' : 'middle')
+    setActive(Math.min(CASES.length - 1, Math.max(0, Math.round(-v / bounds.step))))
+  })
   const atStart = edge === 'start'
   const atEnd = edge === 'end' || bounds.left >= -1
 
   return (
-    <section id="work" className="results">
+    <section id="work" className="results wash">
       <div className="results-card">
         <div className="wrap results-head">
           <div>
-            <p className="eyebrow eyebrow-light">Verified client success</p>
-            <motion.h2 className="h2" {...reveal}>Measurable impact on your bottom line</motion.h2>
+            <MicroLabel light>Verified client success</MicroLabel>
+            <Display lines={['Measurable impact', 'on your bottom line']} />
           </div>
           <div className="results-controls">
             <div className="segment" role="radiogroup" aria-label="Show results">
@@ -322,6 +220,7 @@ export function Results() {
               ))}
             </div>
             <div className="rail-arrows">
+              <span className="rail-count" aria-live="polite">{pad(active + 1)} <i aria-hidden="true">/</i> {pad(CASES.length)}</span>
               <motion.button type="button" className="round" onClick={() => go(-1)} disabled={atStart} aria-label="Previous case" {...press}><ArrowLeftIcon size={18} weight="bold" /></motion.button>
               <motion.button type="button" className="round" onClick={() => go(1)} disabled={atEnd} aria-label="Next case" {...press}><ArrowRightIcon size={18} weight="bold" /></motion.button>
             </div>
@@ -339,16 +238,16 @@ export function Results() {
             onDragStart={() => { dragged.current = Date.now() }}
             onDragEnd={() => { dragged.current = Date.now() }}
           >
-            {CASES.map(c => <CaseCard key={c.client} c={c} after={after} dragged={dragged} />)}
+            {CASES.map((c, i) => <CaseCard key={c.client} c={c} i={i} after={after} dragged={dragged} />)}
           </motion.ul>
         </div>
         <div className="wrap">
           <ul className="impact">
-            {IMPACT.map(n => (
-              <li key={n.label}>
-                <strong>{n.prefix}<Count to={n.value} />{n.suffix}</strong>
-                <span>{n.label}</span>
-              </li>
+            {IMPACT.map((n, i) => (
+              <motion.li key={n.label} {...stagger(i)}>
+                <strong>{n.prefix}<Counter to={n.value} suffix={n.suffix} /></strong>
+                <MicroLabel as="span" dot={false}>{n.label}</MicroLabel>
+              </motion.li>
             ))}
           </ul>
           <p className="impact-note">Average numbers our clients see within the first 60 days.</p>
@@ -358,117 +257,98 @@ export function Results() {
   )
 }
 
-function CaseCard({ c, after, dragged }) {
+// Before and after cross-fade in place. The old version span-flipped the card in 3D, which
+// read as a widget rather than an editorial page.
+function CaseCard({ c, i, after, dragged }) {
   const [own, setOwn] = useState(null)
   useEffect(() => setOwn(null), [after])
-  const flipped = own ?? after
-  const flip = () => { if (Date.now() - dragged.current > 250) setOwn(!flipped) }
-  const face = (kind, label, metric, text) => (
-    <span className={'case-face case-' + kind}>
-      <span className="case-top"><span className="case-tag">{c.service}</span><span>{label}</span></span>
-      <span className="case-metric">{metric}</span>
-      <span className="case-metric-label">{c.metric}</span>
-      <span className="case-text">{text}</span>
-      <span className="case-client">{c.client}<small>{c.place}</small></span>
-    </span>
-  )
+  const shown = own ?? after
+  const toggle = () => { if (Date.now() - dragged.current > 250) setOwn(!shown) }
   return (
     <li className="case">
-      <button type="button" className="case-btn" onClick={flip} aria-label={`${c.client}. ${flipped ? c.after : c.before} Tap to show ${flipped ? 'before' : 'after'}.`}>
-        <motion.span className="case-inner" initial={false} animate={{ rotateY: flipped ? 180 : 0 }} transition={{ type: 'spring', stiffness: 160, damping: 20 }}>
-          {face('before', 'Before', c.from, c.before)}
-          {face('after', 'After Creatix', c.to, c.after)}
+      <button type="button" className="case-btn" onClick={toggle} aria-label={`${c.client}. ${shown ? c.after : c.before} Activate to show ${shown ? 'before' : 'after'}.`}>
+        <span className="case-top">
+          <span className="case-index" aria-hidden="true">[{pad(i + 1)}]</span>
+          <span className={'case-tag' + (shown ? ' is-after' : '')}>{shown ? 'After Creatix' : 'Before'}</span>
+        </span>
+        <motion.span key={String(shown)} className="case-face" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}>
+          <span className="case-metric">{shown ? c.to : c.from}</span>
+          <MicroLabel as="span" dot={false} className="case-metric-label">{c.metric}</MicroLabel>
+          <span className="case-text">{shown ? c.after : c.before}</span>
         </motion.span>
+        <span className="case-client">{c.client}<small>{c.service} · {c.place}</small></span>
       </button>
     </li>
   )
 }
 
-/* ---------- Team: panels that open toward your pointer ---------- */
+/* ---------- Team ---------- */
 
 export function Team() {
-  const [open, setOpen] = useState(0)
   return (
     <section id="team" className="team wrap">
       <div className="section-head">
         <div>
-          <p className="eyebrow">Meet the team</p>
-          <motion.h2 className="h2" {...reveal}>The minds behind the innovation</motion.h2>
+          <MicroLabel>Meet the team</MicroLabel>
+          <Display lines={['The minds behind', 'the innovation']} />
         </div>
         <ul className="values">
-          {VALUES.map(v => <motion.li key={v.title} {...reveal}><strong>{v.title}</strong><span>{v.text}</span></motion.li>)}
+          {VALUES.map((v, i) => (
+            <motion.li key={v.title} {...stagger(i)}>
+              <strong>{v.title}</strong>
+              <span>{v.text}</span>
+            </motion.li>
+          ))}
         </ul>
       </div>
-      <div className="members">
+      <ul className="members">
         {TEAM.map((m, i) => (
-          <article key={m.name} className={'member' + (open === i ? ' is-open' : '')} onPointerEnter={() => setOpen(i)} onFocus={() => setOpen(i)} onClick={() => setOpen(i)} tabIndex={0}>
-            <img src={m.img} alt={m.name} loading="lazy" draggable={false} />
-            <div className="member-info">
-              <h3>{m.name}</h3>
-              <p className="member-role">{m.role}</p>
-              <p className="member-text">{m.text}</p>
-            </div>
-          </article>
+          <li key={m.name}>
+            <Frame className="member-photo" src={m.img} alt={m.name} ratio="4 / 5" />
+            <span className="member-index" aria-hidden="true">[{pad(i + 1)}]</span>
+            <h3>{m.name}</h3>
+            <MicroLabel as="p" dot={false} className="member-role">{m.role}</MicroLabel>
+            <p className="member-text">{m.text}</p>
+          </li>
         ))}
-      </div>
+      </ul>
     </section>
   )
 }
 
-/* ---------- Testimonials: a deck you can throw ---------- */
+/* ---------- Testimonials: one large quote at a time ---------- */
 
 export function Testimonials() {
-  const [order, setOrder] = useState(TESTIMONIALS.map((_, i) => i))
-  const next = () => setOrder(o => [...o.slice(1), o[0]])
-  const prev = () => setOrder(o => [o[o.length - 1], ...o.slice(0, -1)])
+  const [i, setI] = useState(0)
+  const reduce = useReducedMotion()
+  const t = TESTIMONIALS[i]
+  const move = step => setI(v => (v + step + TESTIMONIALS.length) % TESTIMONIALS.length)
   return (
-    <section className="voices wrap" aria-label="Testimonials">
-      <div className="voices-copy">
-        <motion.h2 className="h2" {...reveal}>Trusted by leaders & innovators</motion.h2>
-        <p>Hear from founders, directors and executives who scaled their operations with Creatix Innovation.</p>
-        <div className="rating">
-          <span className="stars" aria-hidden="true">{[0, 1, 2, 3, 4].map(i => <StarIcon key={i} size={18} weight="fill" />)}</span>
-          <span><b>4.9 / 5</b> Google customer rating, based on 85+ client reviews</span>
+    <section className="voices wash" aria-label="Testimonials">
+      <div className="wrap voices-inner">
+        <div className="voices-head">
+          <MicroLabel>In their words</MicroLabel>
+          <div className="rail-arrows">
+            <span className="rail-count" aria-live="polite">{pad(i + 1)} <i aria-hidden="true">/</i> {pad(TESTIMONIALS.length)}</span>
+            <motion.button type="button" className="round round-light" onClick={() => move(-1)} aria-label="Previous testimonial" {...press}><ArrowLeftIcon size={18} weight="bold" /></motion.button>
+            <motion.button type="button" className="round round-light" onClick={() => move(1)} aria-label="Next testimonial" {...press}><ArrowRightIcon size={18} weight="bold" /></motion.button>
+          </div>
         </div>
-        <div className="rail-arrows">
-          <motion.button type="button" className="round round-light" onClick={prev} aria-label="Previous testimonial" {...press}><ArrowLeftIcon size={18} weight="bold" /></motion.button>
-          <motion.button type="button" className="round round-light" onClick={next} aria-label="Next testimonial" {...press}><ArrowRightIcon size={18} weight="bold" /></motion.button>
-        </div>
-      </div>
-      <div className="deck">
-        {order.map((idx, pos) => <Voice key={idx} t={TESTIMONIALS[idx]} pos={pos} onThrow={next} />)}
+        <motion.figure
+          key={i}
+          className="voice"
+          initial={reduce ? false : { opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <blockquote className="quote-serif">{t.quote}</blockquote>
+          <figcaption>
+            <span className="voice-name">{t.name}</span>
+            <MicroLabel as="span" dot={false}>{t.role}</MicroLabel>
+          </figcaption>
+        </motion.figure>
       </div>
     </section>
-  )
-}
-
-function Voice({ t, pos, onThrow }) {
-  const x = useMotionValue(0)
-  const rotate = useTransform(x, [-320, 320], [-14, 14])
-  const top = pos === 0
-  const end = (_, info) => {
-    const far = Math.abs(info.offset.x) > 110 || Math.abs(info.velocity.x) > 650
-    if (!far) return animate(x, 0, { type: 'spring', stiffness: 420, damping: 30, velocity: info.velocity.x })
-    const dir = Math.sign(info.offset.x || info.velocity.x)
-    animate(x, dir * 720, { type: 'spring', stiffness: 140, damping: 22, velocity: info.velocity.x, restDelta: 20, onComplete: () => { onThrow(); x.jump(0) } })
-  }
-  return (
-    <motion.figure
-      className={'voice' + (top ? '' : ' is-back')}
-      style={{ x, rotate, zIndex: 10 - pos }}
-      initial={false}
-      animate={{ scale: 1 - pos * 0.06, y: pos * 22, opacity: 1 - pos * 0.18 }}
-      transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-      drag={top ? 'x' : false}
-      onDragEnd={end}
-      aria-hidden={!top}
-    >
-      <blockquote>“{t.quote}”</blockquote>
-      <figcaption>
-        <img src={t.img} alt="" draggable={false} />
-        <span><b>{t.name}</b>{t.role}</span>
-      </figcaption>
-    </motion.figure>
   )
 }
 
@@ -478,13 +358,19 @@ export function Faq() {
   const [open, setOpen] = useState(0)
   return (
     <section id="faq" className="faq wrap" aria-labelledby="faq-title">
-      <div><p className="eyebrow">A few good questions</p><motion.h2 id="faq-title" className="h2" {...reveal}>Before we<br /><span className="liquid-glass">begin.</span></motion.h2></div>
+      <div className="faq-head">
+        <MicroLabel>A few good questions</MicroLabel>
+        <Display id="faq-title" lines={['Before', 'we begin.']} />
+      </div>
       <ul className="faq-list">
         {FAQ.map((f, i) => (
           <li key={f.q} className={open === i ? 'is-open' : ''}>
             <button type="button" aria-expanded={open === i} aria-controls={'faq-' + i} onClick={() => setOpen(open === i ? -1 : i)}>
-              <span>{f.q}</span>
-              <motion.span className="faq-icon" animate={{ rotate: open === i ? 45 : 0 }} transition={{ type: 'spring', stiffness: 500, damping: 30 }}><PlusIcon size={18} weight="bold" /></motion.span>
+              <span className="faq-index" aria-hidden="true">[{pad(i + 1)}]</span>
+              <span className="faq-q">{f.q}</span>
+              <motion.span className="faq-icon" animate={{ rotate: open === i ? 45 : 0 }} transition={{ type: 'spring', stiffness: 500, damping: 30 }}>
+                <PlusIcon size={18} weight="bold" />
+              </motion.span>
             </button>
             <div id={'faq-' + i} className="faq-a" role="region"><div><p>{f.a}</p></div></div>
           </li>
@@ -494,40 +380,7 @@ export function Faq() {
   )
 }
 
-/* ---------- Contact: three panes of frosted glass ---------- */
-
-// A pane of frosted glass: the pointer tilts it and moves the sheen.
-function Tile({ on = false, onPick, index, as = 'button', href, children }) {
-  const reduce = useReducedMotion()
-  const ref = useRef(null)
-  const rx = useMotionValue(0), ry = useMotionValue(0)
-  const srx = useSpring(rx, { stiffness: 260, damping: 22 }), sry = useSpring(ry, { stiffness: 260, damping: 22 })
-  const onMove = e => {
-    if (reduce || e.pointerType !== 'mouse') return
-    const r = ref.current.getBoundingClientRect()
-    const x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height
-    ry.set((x - 0.5) * 12); rx.set((0.5 - y) * 12)
-    ref.current.style.setProperty('--gx', x * 100 + '%')
-    ref.current.style.setProperty('--gy', y * 100 + '%')
-  }
-  const onLeave = () => { rx.set(0); ry.set(0) }
-  const Comp = as === 'a' ? motion.a : motion.button
-  return (
-    <Comp
-      ref={ref}
-      {...(as === 'a' ? { href, target: href?.startsWith('http') ? '_blank' : undefined, rel: 'noreferrer' } : { type: 'button' })}
-      className={`tile tile-${index}${on ? ' is-on' : ''}`}
-      onClick={onPick}
-      onPointerMove={onMove}
-      onPointerLeave={onLeave}
-      style={reduce ? undefined : { rotateX: srx, rotateY: sry, transformPerspective: 900 }}
-      whileTap={{ scale: 0.96 }}
-      transition={{ type: 'spring', stiffness: 600, damping: 32 }}
-    >
-      {children}
-    </Comp>
-  )
-}
+/* ---------- Contact ---------- */
 
 export function Contact({ onTalk }) {
   return (
@@ -535,28 +388,32 @@ export function Contact({ onTalk }) {
       <div className="contact-card">
         <img className="contact-photo" src="/img/team-collab.jpg" alt="" loading="lazy" />
         <div className="contact-scrim" />
-        <div className="contact-copy">
-          <motion.h2 className="h2" {...reveal}>A conversation.<br /><span className="liquid-glass">A new possibility.</span></motion.h2>
-          <p>Talk to Creatix Innovation about your next project, website overhaul or business automation system.</p>
-          <ul className="contact-meta">
-            <li><MapPinIcon size={18} weight="bold" />{CONTACT.location}</li>
-            <li><ClockIcon size={18} weight="bold" />{CONTACT.hours}</li>
-            <li><EnvelopeSimpleIcon size={18} weight="bold" /><a href={'mailto:' + CONTACT.email}>{CONTACT.email}</a></li>
-          </ul>
-        </div>
-        <div className="tiles contact-tiles">
-          <Tile index={0} on onPick={onTalk}>
-            <span className="tile-word">Let's Talk</span>
-            <span className="tile-label">Book a free live demo</span>
-          </Tile>
-          <Tile index={1} as="a" href={CONTACT.phoneHref}>
-            <span className="tile-word">Call</span>
-            <span className="tile-label">{CONTACT.phone}</span>
-          </Tile>
-          <Tile index={2} as="a" href={wa('Hi Creatix, I would like a free consultation.')}>
-            <span className="tile-word">Chat</span>
-            <span className="tile-label">On WhatsApp</span>
-          </Tile>
+        <div className="wrap contact-inner">
+          <div className="contact-copy">
+            <MicroLabel light>Start here</MicroLabel>
+            <Display lines={['A conversation.', 'A new possibility.']} />
+            <p>Talk to Creatix Innovation about your next project, website overhaul or business automation system.</p>
+            <ul className="contact-meta">
+              <li><MapPinIcon size={17} weight="bold" />{CONTACT.location}</li>
+              <li><ClockIcon size={17} weight="bold" />{CONTACT.hours}</li>
+              <li><EnvelopeSimpleIcon size={17} weight="bold" /><a href={'mailto:' + CONTACT.email}>{CONTACT.email}</a></li>
+            </ul>
+          </div>
+          <div className="contact-tiles">
+            <motion.button type="button" className="tile glass tile-lead" onClick={onTalk} {...press}>
+              <span className="tile-word">Let's Talk</span>
+              <MicroLabel as="span" dot={false} className="tile-label">Book a free live demo</MicroLabel>
+              <ArrowUpRightIcon className="tile-go" size={18} weight="bold" />
+            </motion.button>
+            <motion.a className="tile glass" href={CONTACT.phoneHref} {...press}>
+              <span className="tile-word">Call</span>
+              <MicroLabel as="span" dot={false} className="tile-label">{CONTACT.phone}</MicroLabel>
+            </motion.a>
+            <motion.a className="tile glass" href={wa('Hi Creatix, I would like a free consultation.')} target="_blank" rel="noreferrer" {...press}>
+              <span className="tile-word">Chat</span>
+              <MicroLabel as="span" dot={false} className="tile-label">On WhatsApp</MicroLabel>
+            </motion.a>
+          </div>
         </div>
       </div>
     </section>

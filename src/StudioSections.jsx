@@ -1,4 +1,5 @@
 import { motion, useScroll } from 'motion/react'
+import { Marquee } from './ui.jsx'
 import { useSiteMotion } from './site-motion.jsx'
 
 export const DISCIPLINES = [
@@ -9,9 +10,14 @@ export const DISCIPLINES = [
 ]
 
 export function ManifestoStrip() {
-  return <div className="manifesto-strip" aria-label="Thoughtfully designed. Precisely engineered. Built for your business.">
-    <div aria-hidden="true">{[0, 1].map(i => <span key={i}>Thoughtfully designed <b>✳</b> Precisely engineered <b>✳</b> Built for your business <b>✳</b></span>)}</div>
-  </div>
+  const words = ['Thoughtfully designed', 'Precisely engineered', 'Built for your business']
+  return (
+    <Marquee className="manifesto-strip" speed={44} label={words.join('. ') + '.'}>
+      <span className="manifesto-run">
+        {words.map(w => <span key={w}>{w}<i aria-hidden="true" /></span>)}
+      </span>
+    </Marquee>
+  )
 }
 
 export function ReadingProgress() {

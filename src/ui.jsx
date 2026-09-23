@@ -124,22 +124,29 @@ export function Marquee({ children, speed = 40, reverse = false, className = '',
   )
 }
 
-// Imagery arrives with a slight slide and untwist, sits dimmed, and lifts on hover.
+// Imagery settles into its window, sits dimmed, and lifts on hover.
+//
+// The entrance transform goes on an inner element, never on .frame itself. .frame is the
+// clipping box, and an element cannot clip its own transform: an earlier version animated
+// x: 40 on the frame and pushed 21px past the right edge of a 390px viewport while it
+// waited to come into view, which is a horizontal scrollbar on every phone. Scaling down
+// inside the clip cannot overflow anything.
 export function Frame({ src, alt = '', className = '', glow = false, ratio, children, ...img }) {
   const reduce = useReducedMotion()
   return (
-    <motion.div
-      className={['frame', className].filter(Boolean).join(' ')}
-      style={ratio ? { aspectRatio: ratio } : undefined}
-      initial={reduce ? false : { opacity: 0, x: 40, rotate: 1.5 }}
-      whileInView={reduce ? undefined : { opacity: 1, x: 0, rotate: 0 }}
-      viewport={{ once: true, amount: 0.3 }}
-      transition={{ duration: 1.1, ease: EASE_DRAMA }}
-    >
+    <div className={['frame', className].filter(Boolean).join(' ')} style={ratio ? { aspectRatio: ratio } : undefined}>
       {glow && <span className="frame-glow" aria-hidden="true" />}
-      {src && <img src={src} alt={alt} loading="lazy" decoding="async" {...img} />}
-      {children}
-    </motion.div>
+      <motion.div
+        className="frame-inner"
+        initial={reduce ? false : { opacity: 0, scale: 1.08 }}
+        whileInView={reduce ? undefined : { opacity: 1, scale: 1 }}
+        viewport={{ once: true, amount: 0.3 }}
+        transition={{ duration: 1.2, ease: EASE_DRAMA }}
+      >
+        {src && <img src={src} alt={alt} loading="lazy" decoding="async" {...img} />}
+        {children}
+      </motion.div>
+    </div>
   )
 }
 

@@ -5,7 +5,7 @@ import { MotionToggle, ReadingProgress } from './StudioSections.jsx'
 import { Page } from './pages.jsx'
 import { PAGES, findRoute, headTags } from './routes.js'
 import { Link, Router, screenOf, useRouter } from './router.jsx'
-import { Brand, NAV, press, useNavCurrent } from './ui.jsx'
+import { Brand, Marquee, MicroLabel, NAV, press, useNavCurrent } from './ui.jsx'
 import { CONTACT, INQUIRY_SERVICES, SERVICES, wa } from './content.js'
 import { catLabel } from './sections.jsx'
 
@@ -140,36 +140,49 @@ function FloatingNav({ onTalk, onMenu }) {
 function Footer() {
   const picks = ['web', 'app', 'crm', 'erp', 'pos', 'marketing'].map(id => SERVICES.find(x => x.id === id))
   const toTop = () => scrollTo({ top: 0 })
+  const cols = [
+    ['Services', [...picks.map(s => [s.title, '/' + s.slug]), ['All services', '/services']]],
+    ['Company', [['Home', '/'], ...NAV.map(n => [n.label, n.to])]],
+  ]
   return (
-    <footer className="footer wrap">
-      <div className="footer-brand">
-        <img src="/img/creatix-logo.png" alt="Creatix Innovation" width="92" height="88" loading="lazy" />
-        <p>Powering Digital Excellence. Your partner in digital transformation and innovation.</p>
+    <footer className="footer">
+      {/* The statement the cut GlassStory section carried, which was worth keeping. */}
+      <div className="wrap footer-statement">
+        <p className="quote-serif">Design and engineering, in the same room.</p>
       </div>
-      <div>
-        <h3>Services</h3>
-        <ul>
-          {picks.map(s => <li key={s.id}><Link to={'/' + s.slug}>{s.title}</Link></li>)}
-          <li><Link to="/services">All services</Link></li>
-        </ul>
+
+      <div className="wrap footer-cols">
+        <div className="footer-brand">
+          <img src="/img/creatix-logo.png" alt="Creatix Innovation" width="92" height="88" loading="lazy" />
+          <p>Powering Digital Excellence. Your partner in digital transformation and innovation.</p>
+        </div>
+        {cols.map(([title, items]) => (
+          <nav key={title} aria-label={title}>
+            <MicroLabel as="h3" dot={false}>{title}</MicroLabel>
+            <ul>{items.map(([label, to]) => <li key={to}><Link to={to}>{label}</Link></li>)}</ul>
+          </nav>
+        ))}
+        <div>
+          <MicroLabel as="h3" dot={false}>Contact</MicroLabel>
+          <ul>
+            <li><a href={CONTACT.phoneHref}>{CONTACT.phone}</a></li>
+            <li><a href={'mailto:' + CONTACT.email}>{CONTACT.email}</a></li>
+            <li>{CONTACT.location}</li>
+            <li>{CONTACT.hours}</li>
+          </ul>
+        </div>
       </div>
-      <div>
-        <h3>Company</h3>
-        <ul>
-          <li><Link to="/">Home</Link></li>
-          {NAV.map(n => <li key={n.to}><Link to={n.to}>{n.label}</Link></li>)}
-        </ul>
+
+      {/* The wordmark at display scale, running past. Sign-off rather than navigation. */}
+      <Marquee className="footer-mark" speed={26} label="Creatix Innovation">
+        <span className="display display-xl liquid-glass">Creatix Innovation&nbsp;·&nbsp;</span>
+      </Marquee>
+
+      <div className="wrap footer-legal">
+        <span suppressHydrationWarning>© {new Date().getFullYear()} Creatix Innovation. All rights reserved.</span>
+        <button type="button" className="to-top" onClick={toTop}>Back to top ↑</button>
+        <MotionToggle />
       </div>
-      <div>
-        <h3>Contact</h3>
-        <ul>
-          <li><a href={CONTACT.phoneHref}>{CONTACT.phone}</a></li>
-          <li><a href={'mailto:' + CONTACT.email}>{CONTACT.email}</a></li>
-          <li>{CONTACT.location}</li>
-          <li>{CONTACT.hours}</li>
-        </ul>
-      </div>
-      <div className="footer-legal"><span suppressHydrationWarning>© {new Date().getFullYear()} Creatix Innovation. All rights reserved.</span><button type="button" className="to-top" onClick={toTop}>Back to top ↑</button><MotionToggle /></div>
     </footer>
   )
 }
