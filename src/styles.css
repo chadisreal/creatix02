@@ -516,13 +516,6 @@ input, select, textarea, button { font: inherit; color: inherit; }
 .sent p { max-width: 38ch; margin: 0; color: var(--ink-2); }
 .sent-icon { width: 60px; height: 60px; display: grid; place-items: center; border-radius: 50%; background: var(--accent); color: var(--bg); }
 
-.sheet-bottom { place-items: end center; padding: 0; }
-.menu { position: relative; width: 100%; padding: 12px 20px calc(24px + env(safe-area-inset-bottom)); border-radius: 0; background: var(--paper); touch-action: none; }
-.grabber { display: block; width: 44px; height: 5px; margin: 0 auto 14px; border-radius: 5px; background: rgb(255 255 255 / 0.2); }
-.menu nav { display: grid; }
-.menu nav a { padding: 14px 4px; border-bottom: 1px solid var(--line); color: var(--ink); font-size: 1.6rem; font-weight: 500; letter-spacing: -0.03em; text-decoration: none; }
-.menu-actions { display: grid; gap: 10px; margin-top: 20px; }
-
 /* ---------- Process ---------- */
 
 /* ---------- Results ---------- */
@@ -854,4 +847,43 @@ main:focus { outline: none; }
 }
 @media (max-width: 560px) {
   .footer-cols { grid-template-columns: 1fr; }
+}
+
+/* ---------- Full-screen menu ---------- */
+/* The overlay is reachable at every width, not just on phones: it is one of the page's
+   set pieces rather than a small-screen fallback. */
+.hero-nav .show-sm, .float-nav .show-sm { display: inline-flex !important; }
+
+.menu-layer { place-items: stretch; padding: 0; }
+.menu {
+  position: relative; z-index: 1; display: flex; flex-direction: column;
+  width: 100%; height: 100%; padding: clamp(20px, 3.5vw, 44px) var(--gutter) clamp(24px, 4vw, 52px);
+  background: var(--bg); color: var(--ink); overflow-y: auto; overscroll-behavior: contain;
+}
+.menu-top { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.menu-close { display: inline-flex; align-items: center; gap: 9px; padding: 10px 14px; border: 1px solid var(--line-strong); background: none; color: var(--ink); font-family: var(--font-mono); font-size: 0.625rem; text-transform: uppercase; letter-spacing: 0.18em; cursor: pointer; transition: border-color 0.25s, color 0.25s; }
+.menu-close:hover { border-color: var(--accent); color: var(--accent); }
+
+.menu-nav { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 0; padding-block: clamp(20px, 3vw, 38px); }
+.menu-nav a {
+  display: flex; align-items: baseline; gap: clamp(14px, 2vw, 30px);
+  padding-block: clamp(5px, 0.8vw, 11px); border-bottom: 1px solid var(--line);
+  color: var(--ink); text-decoration: none;
+  font-size: clamp(1.85rem, 5vw, 4rem); font-weight: 900; text-transform: uppercase;
+  line-height: 0.95; letter-spacing: -0.04em;
+  transition: color 0.3s var(--ease), border-color 0.3s;
+}
+.menu-nav a:hover { color: var(--accent); border-color: rgb(var(--accent-rgb) / 0.5); }
+.menu-index { flex: none; font-family: var(--font-mono); font-size: 0.625rem; font-weight: 500; letter-spacing: 0.14em; color: var(--accent); }
+
+.menu-foot { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(22px, 4vw, 60px); padding-top: clamp(20px, 3vw, 34px); border-top: 1px solid var(--line); }
+.menu-foot .eyebrow { margin: 0 0 14px; color: var(--ink-3); }
+.menu-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.menu-links { display: grid; gap: 9px; margin: 0; padding: 0; list-style: none; color: var(--ink-2); }
+.menu-links a { color: var(--ink); text-decoration: none; transition: color 0.2s; }
+.menu-links a:hover { color: var(--accent); }
+
+@media (max-width: 760px) {
+  .menu-foot { grid-template-columns: 1fr; }
+  .menu-nav { justify-content: flex-start; }
 }

@@ -5,7 +5,7 @@ import { MotionToggle, ReadingProgress } from './StudioSections.jsx'
 import { Page } from './pages.jsx'
 import { PAGES, findRoute, headTags } from './routes.js'
 import { Link, Router, screenOf, useRouter } from './router.jsx'
-import { Brand, Marquee, MicroLabel, NAV, press, useNavCurrent } from './ui.jsx'
+import { Brand, LineMask, Marquee, MicroLabel, NAV, press, useNavCurrent } from './ui.jsx'
 import { useLenis } from './site-motion.jsx'
 import { CONTACT, INQUIRY_SERVICES, SERVICES, wa } from './content.js'
 import { catLabel } from './sections.jsx'
@@ -339,20 +339,53 @@ function MenuSheet({ onClose, onTalk }) {
   const layerRef = useSheet(onClose)
   const close = useRef(null)
   useEffect(() => { close.current?.focus({ preventScroll: true }) }, [])
-  const end = (_, info) => { if (info.offset.y > 110 || info.velocity.y > 500) onClose() }
+  const items = [{ to: '/', label: 'Home' }, ...NAV]
   return (
-    <div ref={layerRef} className="sheet-layer sheet-bottom" role="dialog" aria-modal="true" aria-label="Menu">
+    <div ref={layerRef} className="sheet-layer menu-layer" role="dialog" aria-modal="true" aria-label="Menu">
       <motion.div className="scrim" onClick={onClose} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} />
-      <motion.div className="menu" initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', stiffness: 380, damping: 36 }}
-        drag="y" dragConstraints={{ top: 0, bottom: 0 }} dragElastic={{ top: 0.05, bottom: 0.9 }} onDragEnd={end}>
-        <span className="grabber" />
-        <button ref={close} type="button" className="sheet-close" onClick={onClose} aria-label="Close menu"><XIcon size={20} /></button>
-        <nav><Link to="/" onClick={onClose}>Home</Link>{NAV.map(n => <Link key={n.to} to={n.to} onClick={onClose}>{n.label}</Link>)}</nav>
-        <div className="menu-actions">
-          <motion.button type="button" className="pill pill-red pill-lg" onClick={onTalk} {...press}>Let's Talk</motion.button>
-          <a className="pill pill-outline pill-lg" href={CONTACT.phoneHref}><PhoneIcon size={18} weight="bold" />{CONTACT.phone}</a>
+      {/* A full-screen curtain on the dramatic curve, with the links masked in behind it. */}
+      <motion.div
+        className="menu"
+        initial={{ clipPath: 'inset(0 0 100% 0)' }}
+        animate={{ clipPath: 'inset(0 0 0% 0)' }}
+        exit={{ clipPath: 'inset(0 0 100% 0)' }}
+        transition={{ duration: 0.8, ease: [0.76, 0, 0.24, 1] }}
+      >
+        <div className="menu-top">
+          <Brand light />
+          <button ref={close} type="button" className="menu-close" onClick={onClose} aria-label="Close menu">
+            <span>Close</span><XIcon size={18} weight="bold" />
+          </button>
+        </div>
+
+        <nav className="menu-nav" aria-label="Sections">
+          {items.map((n, i) => (
+            <Link key={n.to} to={n.to} onClick={onClose}>
+              <span className="menu-index" aria-hidden="true">[{String(i + 1).padStart(2, '0')}]</span>
+              <LineMask amount={0} delay={0.18 + i * 0.06}>{n.label}</LineMask>
+            </Link>
+          ))}
+        </nav>
+
+        <div className="menu-foot">
+          <div>
+            <MicroLabel as="p" dot={false}>Start a project</MicroLabel>
+            <div className="menu-actions">
+              <motion.button type="button" className="pill pill-red pill-lg" onClick={onTalk} {...press}>Let's Talk</motion.button>
+              <a className="pill pill-outline pill-lg" href={CONTACT.phoneHref}><PhoneIcon size={18} weight="bold" />{CONTACT.phone}</a>
+            </div>
+          </div>
+          <div>
+            <MicroLabel as="p" dot={false}>Elsewhere</MicroLabel>
+            <ul className="menu-links">
+              <li><a href={'mailto:' + CONTACT.email}>{CONTACT.email}</a></li>
+              <li><a href={wa('Hi Creatix, I would like a free consultation.')} target="_blank" rel="noreferrer">WhatsApp</a></li>
+              <li>{CONTACT.location}</li>
+            </ul>
+          </div>
         </div>
       </motion.div>
     </div>
   )
 }
+
