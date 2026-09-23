@@ -6,12 +6,14 @@ import { Page } from './pages.jsx'
 import { PAGES, findRoute, headTags } from './routes.js'
 import { Link, Router, screenOf, useRouter } from './router.jsx'
 import { Brand, Marquee, MicroLabel, NAV, press, useNavCurrent } from './ui.jsx'
+import { useLenis } from './site-motion.jsx'
 import { CONTACT, INQUIRY_SERVICES, SERVICES, wa } from './content.js'
 import { catLabel } from './sections.jsx'
 
 // Lock page scroll while a sheet is open, close on Escape, and give focus back to whatever opened it.
 function useSheet(onClose) {
   const layerRef = useRef(null)
+  const lenisRef = useLenis()
   useEffect(() => {
     const back = document.activeElement
     const key = e => {
@@ -26,6 +28,9 @@ function useSheet(onClose) {
       else if (!e.shiftKey && (document.activeElement === last || !layer.contains(document.activeElement))) { e.preventDefault(); first.focus() }
     }
     document.documentElement.classList.add('is-locked')
+    // html { overflow: hidden } does not reach Lenis: it would keep consuming wheel events
+    // and the page would jump to the accumulated position when the sheet closed.
+    lenisRef?.current?.stop()
     addEventListener('keydown', key)
     return () => {
       removeEventListener('keydown', key)
@@ -35,6 +40,7 @@ function useSheet(onClose) {
           if (!remaining.contains(document.activeElement)) remaining.querySelector('button, a[href], input')?.focus({ preventScroll: true })
         } else {
           document.documentElement.classList.remove('is-locked')
+          lenisRef?.current?.start()
           if (back?.isConnected) back.focus?.({ preventScroll: true })
         }
       })
@@ -139,7 +145,12 @@ function FloatingNav({ onTalk, onMenu }) {
 
 function Footer() {
   const picks = ['web', 'app', 'crm', 'erp', 'pos', 'marketing'].map(id => SERVICES.find(x => x.id === id))
-  const toTop = () => scrollTo({ top: 0 })
+  const lenisRef = useLenis()
+  const toTop = () => {
+    const lenis = lenisRef?.current
+    if (lenis) lenis.scrollTo(0, { duration: 1 })
+    else scrollTo({ top: 0, behavior: 'smooth' })
+  }
   const cols = [
     ['Services', [...picks.map(s => [s.title, '/' + s.slug]), ['All services', '/services']]],
     ['Company', [['Home', '/'], ...NAV.map(n => [n.label, n.to])]],

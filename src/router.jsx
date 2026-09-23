@@ -3,6 +3,7 @@
 // follows the scroll. A service link opens as a sheet over the page; loading its address directly shows its full page.
 import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { SECTIONS, findRoute, normalizePath } from './routes.js'
+import { useLenis } from './site-motion.jsx'
 
 const RouterContext = createContext({ path: '/', bg: null, navigate: () => {}, closeSheet: () => {} })
 export const useRouter = () => useContext(RouterContext)
@@ -27,13 +28,39 @@ export function Router({ url, children }) {
   const pending = useRef(null) // where to scroll once a different screen has rendered
   const gliding = useRef(false)
   const settle = useRef(0)
+  // Router sits inside SiteMotion, which owns the instance; null when motion is reduced.
+  const lenisRef = useLenis()
 
   // While a link glides down the page, the address shouldn't flick through every section it passes.
+  //
+  // Every scroll goes through Lenis when it exists. A raw scrollTo would be overwritten on
+  // the next frame, because Lenis keeps its own target and would carry on animating toward
+  // the stale one. topOf() has already subtracted scroll-padding-top, which lenis.scrollTo
+  // does not honour, so the value passed here is final either way.
   const glide = (top, smooth) => {
     gliding.current = true
     clearTimeout(settle.current)
     settle.current = setTimeout(() => { gliding.current = false }, 150)
-    scrollTo({ top, behavior: smooth && !calm() ? 'smooth' : 'instant' })
+    const lenis = lenisRef?.current
+    if (!lenis) {
+      scrollTo({ top, behavior: smooth && !calm() ? 'smooth' : 'instant' })
+      return
+    }
+    // Lenis clamps its target to a cached scroll limit. Arriving from a service page onto
+    // the one page, that cache still holds the short page's height, so the scroll lands
+    // short of the section. Re-measure before every glide; it only runs on navigation.
+    lenis.resize()
+    if (smooth && !calm()) {
+      // Kept under a second: check-pages.mjs waits 1400ms before asserting where a nav
+      // click landed, and Lenis's own default is around 1.2s.
+      lenis.scrollTo(top, {
+        duration: 0.85,
+        lock: true,
+        onComplete: () => { gliding.current = false; spy() },
+      })
+    } else {
+      lenis.scrollTo(top, { immediate: true })
+    }
   }
 
   const spy = () => {

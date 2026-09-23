@@ -77,11 +77,17 @@ try {
   assert.ok(Math.abs(await landed(page, 'services') - 88) < 40, 'Back glides back to services')
   assert.ok(await sameMain() && await page.evaluate(() => window.stillHere), 'Back stays on the same page')
 
-  // Reading down the page moves the address with you.
-  await page.locator('#work').evaluate(el => scrollTo({ top: el.getBoundingClientRect().top + scrollY - 88, behavior: 'instant' }))
+  // Reading down the page moves the address with you. Jump through Lenis where it is
+  // active: a raw scrollTo gets overwritten on the next frame, because Lenis keeps its own
+  // target and carries on animating toward the stale one.
+  const jumpTo = y => page.evaluate(top => {
+    if (window.__lenis) { window.__lenis.resize(); window.__lenis.scrollTo(top, { immediate: true }) }
+    else scrollTo({ top, behavior: 'instant' })
+  }, y)
+  await jumpTo(await page.locator('#work').evaluate(el => el.getBoundingClientRect().top + scrollY - 88))
   await page.waitForURL(origin + '/portfolio')
   assert.equal(await page.title(), PAGES.find(r => r.path === '/portfolio').title)
-  await page.evaluate(() => scrollTo({ top: 0, behavior: 'instant' }))
+  await jumpTo(0)
   await page.waitForURL(origin + '/')
 
   // A service opens over the page at its own address, and closes back to where you were.
@@ -192,6 +198,24 @@ try {
   assert.ok(audit.geist, 'Geist loaded rather than silently falling back')
   assert.ok(audit.mono, 'Geist Mono loaded rather than silently falling back')
 
+  // Reduced motion has to destroy Lenis rather than stop it. A stopped instance stays
+  // installed: it keeps its classes on <html> and goes on consuming wheel events, so the
+  // page would still feel hijacked by a visitor who asked for no motion.
+  const calm = await context.newPage()
+  await calm.emulateMedia({ reducedMotion: 'reduce' })
+  await calm.goto(origin + '/', { waitUntil: 'networkidle' })
+  await calm.waitForTimeout(1000)
+  const quiet = await calm.evaluate(() => ({
+    paused: document.documentElement.classList.contains('motion-paused'),
+    lenisClass: document.documentElement.classList.contains('lenis'),
+    handle: typeof window.__lenis,
+  }))
+  assert.deepEqual(quiet, { paused: true, lenisClass: false, handle: 'undefined' }, 'reduced motion destroys Lenis and leaves no trace of it')
+  await calm.evaluate(() => scrollTo({ top: 1500, behavior: 'instant' }))
+  await calm.waitForTimeout(300)
+  assert.equal(await calm.evaluate(() => Math.round(scrollY)), 1500, 'with Lenis gone, native scrolling is exact')
+  await calm.close()
+
   // The full-bleed hero uses 100vw and the marquees overflow by design: prove neither
   // leaks a sideways scrollbar, at the bottom of the page as well as the top.
   for (const width of [360, 400, 1920]) {
@@ -218,7 +242,7 @@ try {
   await context.close()
 
   assert.deepEqual(problems, [], 'no console errors or hydration mismatches')
-  console.log(`Passed: ${PAGES.length} addresses on desktop and mobile (status, clean URL, title, canonical, single h1, lands on its section, no overflow, no hydration errors), one-page glide + scroll-following address, Back, service sheet, service landing page, results rail, lead form, accent contrast, 10px floor, fonts loaded, no sideways scroll at 360/400/1920, old URLs and 404.`)
+  console.log(`Passed: ${PAGES.length} addresses on desktop and mobile (status, clean URL, title, canonical, single h1, lands on its section, no overflow, no hydration errors), one-page glide + scroll-following address, Back, service sheet, service landing page, results rail, lead form, accent contrast, 10px floor, fonts loaded, Lenis destroyed under reduced motion, no sideways scroll at 360/400/1920, old URLs and 404.`)
 } finally {
   await browser.close()
   await new Promise(done => server.httpServer.close(done))

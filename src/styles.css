@@ -115,7 +115,9 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 html { scroll-padding-top: 88px; }
-@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+/* Native smooth scrolling is the fallback only. Lenis puts .lenis on <html>, and leaving
+   both engines live means two animators fighting over the same scroll position. */
+@media (prefers-reduced-motion: no-preference) { html:not(.lenis) { scroll-behavior: smooth; } }
 html.is-locked { overflow: hidden; }
 /* The motion kill switch. src/site-motion.jsx toggles .motion-paused from three inputs:
    the device media query, the user's toggle, and its persisted value. Because every
