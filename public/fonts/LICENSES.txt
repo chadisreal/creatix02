@@ -1,4 +1,11 @@
-Copyright 2023 The Host Grotesk Project Authors (https://github.com/Element-Type/HostGrotesk)
+Fonts bundled in this directory, all under the SIL Open Font License 1.1:
+
+  Geist and Geist Mono  - Copyright (c) 2023 Vercel, Inc.
+                          geist-latin.woff2, geist-latin-ext.woff2, geist-mono-latin.woff2
+  Cormorant Garamond    - Copyright (c) 2015 The Cormorant Project Authors
+                          cormorant-400-latin.woff2, cormorant-400i-latin.woff2
+
+The license text follows.
 
 This Font Software is licensed under the SIL Open Font License, Version 1.1.
 This license is copied below, and is also available with a FAQ at:
