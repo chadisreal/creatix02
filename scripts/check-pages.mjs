@@ -69,7 +69,7 @@ try {
   await page.waitForURL(origin + '/contact')
   await settled(page)
   assert.ok(await landed(page, 'contact') < 500, 'Contact lands on the contact section')
-  assert.equal(await page.locator('.float-nav a[aria-current=page]').textContent(), 'Contact')
+  assert.equal(await page.locator('.float-links a[aria-current=page]').textContent(), 'Contact')
 
   await page.goBack()
   await page.waitForURL(origin + '/services')
@@ -86,7 +86,8 @@ try {
   }, y)
   await jumpTo(await page.locator('#work').evaluate(el => el.getBoundingClientRect().top + scrollY - 88))
   await page.waitForURL(origin + '/portfolio')
-  assert.equal(await page.title(), PAGES.find(r => r.path === '/portfolio').title)
+  // The title follows the address a frame later (it is set by an effect), so wait for it.
+  await page.waitForFunction(t => document.title === t, PAGES.find(r => r.path === '/portfolio').title, { timeout: 3000 })
   await jumpTo(0)
   await page.waitForURL(origin + '/')
 
