@@ -23,8 +23,8 @@ try {
   await page.goto(origin, { waitUntil: 'networkidle' })
   await page.waitForTimeout(1800)
 
-  const count = () => page.locator('.hero-count').innerText()
-  const activeTick = () => page.locator('.hero-tick.is-on').innerText()
+  // Which frame is showing: the number on the active tick ("01".."04").
+  const count = (pg = page) => pg.locator('.hero-tick.is-on span').innerText()
   const ticks = page.locator('.hero-tick')
 
   // The stage fills the card, sits behind the type, and never takes the pointer.
@@ -52,41 +52,28 @@ try {
   })
   assert.deepEqual({ canvas: metal.canvas, fills: metal.fills, face: metal.face }, { canvas: true, fills: true, face: true })
   assert.equal(await ticks.count(), 4, 'one tick per service pillar')
-  assert.match(await count(), /^01\s*\/\s*04$/, 'the counter starts at the first frame')
+  assert.equal(await count(), '01', 'starts at the first frame')
 
   // It advances on its own. This is the slowest assertion here and the reason it exists:
   // the slideshow moving unprompted is the whole point of the device.
   await page.waitForTimeout(AFTER_HOLD)
-  assert.match(await count(), /^02\s*\/\s*04$/, 'the carousel advances on its own')
-  const second = await activeTick()
+  assert.equal(await count(), '02', 'the carousel advances on its own')
 
-  // The arrows take over, which also stops the autoplay so the rest of this is deterministic.
-  await page.getByRole('button', { name: 'Next discipline' }).click()
-  await page.waitForTimeout(500)
-  assert.match(await count(), /^03\s*\/\s*04$/, 'next advances a frame')
-  assert.notEqual(await activeTick(), second, 'the active tick follows the frame')
-  await page.getByRole('button', { name: 'Previous discipline' }).click()
-  await page.waitForTimeout(500)
-  assert.match(await count(), /^02\s*\/\s*04$/, 'previous goes back a frame')
-
-  // Taking over must actually pause it: no drifting under the visitor.
-  await page.waitForTimeout(AFTER_HOLD)
-  assert.match(await count(), /^02\s*\/\s*04$/, 'using the arrows pauses the autoplay')
-
-  // The ticks are also controls.
+  // The ticks are the controls, and taking over stops the autoplay.
   await ticks.nth(3).click()
   await page.waitForTimeout(400)
-  assert.match(await count(), /^04\s*\/\s*04$/, 'a tick jumps to its frame')
-  await page.getByRole('button', { name: 'Next discipline' }).click()
+  assert.equal(await count(), '04', 'a tick jumps to its frame')
+  await page.waitForTimeout(AFTER_HOLD)
+  assert.equal(await count(), '04', 'picking a tick pauses the autoplay')
+  await ticks.nth(0).click()
   await page.waitForTimeout(400)
-  assert.match(await count(), /^01\s*\/\s*04$/, 'the carousel wraps round')
 
   // Resume, then confirm the pause control holds it.
   await page.getByRole('button', { name: 'Resume the slideshow' }).click()
   await page.getByRole('button', { name: 'Pause the slideshow' }).waitFor()
   await page.getByRole('button', { name: 'Pause the slideshow' }).click()
   await page.waitForTimeout(AFTER_HOLD)
-  assert.match(await count(), /^01\s*\/\s*04$/, 'the pause control holds the frame')
+  assert.equal(await count(), '01', 'the pause control holds the frame')
 
   assert.ok(await page.locator('.hero-cta .pill-red').isVisible(), 'the primary call to action is visible')
   await page.screenshot({ path: 'artifacts/hero-desktop.png' })
@@ -99,9 +86,9 @@ try {
   await calm.goto(origin, { waitUntil: 'networkidle' })
   await calm.waitForTimeout(1200)
   assert.equal(await calm.locator('.hero-pause').count(), 0, 'no pause control when motion is reduced')
-  assert.match(await calm.locator('.hero-count').innerText(), /^01\s*\/\s*04$/, 'reduced motion starts at the first frame')
+  assert.equal(await count(calm), '01', 'reduced motion starts at the first frame')
   await calm.waitForTimeout(AFTER_HOLD)
-  assert.match(await calm.locator('.hero-count').innerText(), /^01\s*\/\s*04$/, 'reduced motion never auto-advances')
+  assert.equal(await count(calm), '01', 'reduced motion never auto-advances')
   assert.equal(
     await calm.locator('.hero-tick.is-on i').evaluate(el => getComputedStyle(el).animationName),
     'none',
@@ -161,7 +148,7 @@ try {
 
   assert.deepEqual(errors, [], 'no browser runtime errors')
   await context.close()
-  console.log('Passed: stage fit and dimming, autoplay, arrows, ticks, wrap, pause, reduced motion, mobile layout and menu, no-image fallback.')
+  console.log('Passed: stage fit and dimming, autoplay, ticks, pause, reduced motion, mobile layout and menu, no-image fallback.')
 } finally {
   await browser.close()
   await server.close()

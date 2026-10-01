@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion, useScroll, useTransform } from 'motion/react'
-import { ArrowLeftIcon, ArrowRightIcon, ArrowUpRightIcon, PauseIcon, PlayIcon, WhatsappLogoIcon } from '@phosphor-icons/react'
+import { ArrowUpRightIcon, PauseIcon, PlayIcon, WhatsappLogoIcon } from '@phosphor-icons/react'
 import { useReducedMotion } from './site-motion.jsx'
 import { DISCIPLINES } from './StudioSections.jsx'
 import { wa } from './content.js'
@@ -18,11 +18,6 @@ export default function Hero({ onTalk }) {
   const [paused, setPaused] = useState(false)
   const [i, setI] = useState(0)
   const ref = useRef(null)
-
-  const go = step => {
-    setPaused(true)
-    setI(v => (v + step + SLIDES.length) % SLIDES.length)
-  }
 
   // Advances on its own until the visitor takes over, and never when motion is reduced.
   useEffect(() => {
@@ -76,11 +71,6 @@ export default function Hero({ onTalk }) {
           </div>
 
           <div className="hero-dial">
-            <span className="hero-count" aria-live="polite">{String(i + 1).padStart(2, '0')} <i aria-hidden="true">/</i> {String(SLIDES.length).padStart(2, '0')}</span>
-            <div className="hero-arrows">
-              <motion.button type="button" className="round" onClick={() => go(-1)} aria-label="Previous discipline" {...press}><ArrowLeftIcon size={17} weight="bold" /></motion.button>
-              <motion.button type="button" className="round" onClick={() => go(1)} aria-label="Next discipline" {...press}><ArrowRightIcon size={17} weight="bold" /></motion.button>
-            </div>
             <Link className="hero-slide-go" to="/services">See the work<ArrowUpRightIcon size={13} weight="bold" /></Link>
           </div>
 

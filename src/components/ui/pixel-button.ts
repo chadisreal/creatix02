@@ -1,51 +1,50 @@
 import { useEffect } from 'react'
 
-// Pixel-arrow hover for the green buttons, after the Nextjsshop "Button01" reference. At rest the
-// button carries a small square at its right end. On hover that end splits off into its own
-// rounded tile, and the square grows into a pixel ↗: the arrow's pixels light up outward from the
-// square, nearest first, so it reads as the square drawing the arrow rather than noise resolving.
-// The arrow is drawn in the label's colour on the button's green, so it reads in every theme.
+// Pixel-arrow hover for the green buttons, after the Nextjsshop "Button01" reference, built the
+// same way it is: the right end of the button is a 5×5 block of pixels, and an 11-pixel ↗ sits
+// in the same grid on top. On hover the block's pixels blink out in four random waves (index
+// 0–3), then the arrow's pixels blink in over the next four (index 4–7). The blinks are instant,
+// with no fades: that hard on/off is what makes it read as pixels rather than a dissolve. Leaving
+// runs it backwards. At rest the block's centre pixel is a dark square, as in the reference.
 //
 // It decorates every .pill-red on the page, including ones that mount later (the floating nav,
 // the contact form), so call sites need no change: they stay plain .pill-red buttons.
 
-// ↗ in the middle 5×5 of a 7×7 grid. The one-cell margin keeps the arrowhead clear of the
-// button's rounded corner, which used to clip it. The centre cell is the resting square.
 const ARROW = [
-  '.......',
-  '...###.',
-  '....##.',
-  '...#.#.',
-  '..#....',
-  '.#.....',
-  '.......',
-].join('')
-const SIZE = 7, CENTRE = 24
-const STEP = 45 // ms between rings of pixels as the arrow grows out from the square
+  '.####',
+  '...##',
+  '..#.#',
+  '.#..#',
+  '#....',
+].join('') // the reference's 11 overlay pixels
+const CENTRE = 12
+const wave = (from: number) => String(from + Math.floor(Math.random() * 4))
 // Bump when the markup below changes: buttons decorated by an older version (kept alive by a
 // hot reload, which swaps the CSS but not the pixels already in the page) get rebuilt.
-const VERSION = '3'
+const VERSION = '4'
 const SELECTOR = `.pill-red:not([data-px="${VERSION}"])`
 
 function pixelate(el: HTMLElement) {
   el.dataset.px = VERSION
-  el.querySelectorAll(':scope > .px-body, :scope > .px-tile, :scope > .px-layer').forEach(n => n.remove())
+  el.querySelectorAll(':scope > .px-body, :scope > .px-tile, :scope > .px-arrow, :scope > .px-layer').forEach(n => n.remove())
   const body = document.createElement('span')
   body.className = 'px-body'
   const tile = document.createElement('span')
   tile.className = 'px-tile'
-  for (const n of [body, tile]) n.setAttribute('aria-hidden', 'true')
+  const arrow = document.createElement('span')
+  arrow.className = 'px-arrow'
+  for (const n of [body, tile, arrow]) n.setAttribute('aria-hidden', 'true')
 
   ;[...ARROW].forEach((c, i) => {
-    const px = document.createElement('i')
-    if (c === '#') {
-      px.className = i === CENTRE ? 'a dot' : 'a'
-      const dist = Math.max(Math.abs((i % SIZE) - 3), Math.abs(Math.floor(i / SIZE) - 3))
-      px.style.setProperty('--d', String(dist * STEP))
-    }
-    tile.append(px)
+    const b = document.createElement('i')
+    if (i === CENTRE) b.className = 'dot'
+    b.style.setProperty('--i', wave(0))
+    tile.append(b)
+    const a = document.createElement('i')
+    if (c === '#') { a.className = 'a'; a.style.setProperty('--i', wave(4)) }
+    arrow.append(a)
   })
-  el.prepend(body, tile)
+  el.prepend(body, tile, arrow)
 }
 
 export function usePixelButtons() {

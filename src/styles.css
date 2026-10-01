@@ -427,9 +427,6 @@ input, select, textarea, button { font: inherit; color: inherit; }
 .hero-slide-label { margin: 0; color: rgb(255 255 255 / 0.6); }
 
 .hero-dial { justify-self: end; display: flex; align-items: center; gap: clamp(10px, 1.5vw, 18px); }
-.hero-count { font-family: var(--font-mono); font-size: 0.6875rem; letter-spacing: 0.14em; color: rgb(255 255 255 / 0.7); font-variant-numeric: tabular-nums; }
-.hero-count i { font-style: normal; color: var(--accent); }
-.hero-arrows { display: flex; gap: 8px; }
 .hero-slide-go { display: inline-flex; align-items: center; gap: 7px; padding-bottom: 3px; border-bottom: 1px solid rgb(255 255 255 / 0.3); color: #fff; font-family: var(--font-mono); font-size: 0.625rem; text-transform: uppercase; letter-spacing: 0.16em; text-decoration: none; transition: border-color 0.25s, color 0.25s; }
 .hero-slide-go:hover { border-color: var(--accent); color: var(--accent); }
 
@@ -1072,27 +1069,30 @@ html.light .tone-light .card-btn { outline-color: rgb(var(--ink-rgb) / 0.08); bo
 .pill-red[data-px] { --h: 44px; }
 .pill-red.pill-lg[data-px] { --h: 54px; }
 .pill-red[data-px] > svg { display: none; } /* the pixel arrow replaces the button's own icon */
-.px-body, .px-tile {
-  position: absolute; top: 0; bottom: 0; z-index: -1; pointer-events: none; background: var(--fill);
-  transition: right 0.35s var(--ease), border-radius 0.35s var(--ease);
-}
-/* 1px overlap at rest so the two pieces read as one surface, with no hairline between them. */
-.px-body { left: 0; right: calc(var(--h) - 1px); }
-.px-tile { right: 0; width: var(--h); display: grid; grid-template-columns: repeat(7, 1fr); grid-template-rows: repeat(7, 1fr); }
-.px-tile i { background: currentColor; opacity: 0; transition: opacity 0.1s linear; }
-.px-tile i.dot { opacity: 1; }
-/* Split: the gap opens, the inner corners round off so both pieces are rounded shapes like the
-   button itself, and the arrow's pixels come on outward from the square. */
-.pill-red[data-px]:hover .px-body, .pill-red[data-px]:focus-visible .px-body { right: calc(var(--h) * 1.18); border-radius: 0 9px 9px 0; }
-.pill-red[data-px]:hover .px-tile, .pill-red[data-px]:focus-visible .px-tile { border-radius: 9px 0 0 9px; }
-.pill-red[data-px]:hover .px-tile i.a, .pill-red[data-px]:focus-visible .px-tile i.a { opacity: 1; transition-delay: calc(var(--d) * 1ms); }
+.px-body, .px-tile, .px-arrow { position: absolute; top: 0; bottom: 0; z-index: -1; pointer-events: none; }
+/* 1px overlap so the body and the block read as one surface at rest. */
+.px-body { left: 0; right: calc(var(--h) - 1px); background: var(--fill); }
+.px-tile, .px-arrow { right: 0; width: var(--h); display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(5, 1fr); }
+/* The half-pixel spread closes the hairlines that fractional cell sizes leave between pixels. */
+.px-tile i, .px-arrow i.a { background: var(--fill); box-shadow: 0 0 0 0.5px var(--fill); }
+.px-tile i.dot { background: currentColor; box-shadow: none; }
+/* Instant blinks (a zero-length transition, only delayed), so pixels switch rather than fade.
+   Leaving reverses the order: the arrow goes out first, then the block comes back. */
+.px-tile i { transition: visibility 0s calc((3 - var(--i)) * 35ms + 150ms); }
+.px-arrow i.a { visibility: hidden; transition: visibility 0s calc((7 - var(--i)) * 35ms); }
+.pill-red[data-px]:hover .px-tile i, .pill-red[data-px]:focus-visible .px-tile i { visibility: hidden; transition-delay: calc(var(--i) * 45ms); }
+.pill-red[data-px]:hover .px-arrow i.a, .pill-red[data-px]:focus-visible .px-arrow i.a { visibility: visible; transition-delay: calc(var(--i) * 45ms); }
+/* While open the right corners go square, like the reference, so the rounding never clips the
+   arrowhead; they come back when the block is whole again. */
+.pill-red[data-px] { transition: border-radius 0s 0.3s; }
+.pill-red[data-px]:hover, .pill-red[data-px]:focus-visible { border-top-right-radius: 3px; border-bottom-right-radius: 3px; transition-delay: 0s; }
 
 /* Touch screens have no hover, so the arrow tile would only ever sit there as dead width:
    the green buttons go back to plain rounded buttons, with their normal padding. */
 @media (hover: none) {
   .pill-red[data-px] { padding-right: 18px; background: var(--fill); }
   .pill-red.pill-lg[data-px] { padding-right: 26px; }
-  .pill-red[data-px] .px-body, .pill-red[data-px] .px-tile { display: none; }
+  .pill-red[data-px] .px-body, .pill-red[data-px] .px-tile, .pill-red[data-px] .px-arrow { display: none; }
 }
 
 /* ---------- Phones: touch targets and button rows ----------
