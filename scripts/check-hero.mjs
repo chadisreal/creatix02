@@ -28,18 +28,29 @@ try {
   const ticks = page.locator('.hero-tick')
 
   // The stage fills the card, sits behind the type, and never takes the pointer.
-  const stage = await page.locator('.hero-shot').first().evaluate(img => {
+  const stage = await page.locator('.hero-lines').first().evaluate(img => {
     const shot = img.getBoundingClientRect(), card = document.querySelector('.hero-card').getBoundingClientRect()
     return {
       fits: Math.abs(shot.width - card.width) < 2 && Math.abs(shot.height - card.height) < 2,
       events: getComputedStyle(img.parentElement).pointerEvents,
-      dimmed: getComputedStyle(img).filter.includes('brightness'),
+      dimmed: Number(getComputedStyle(img).opacity) < 1,
       behindCopy: Number(getComputedStyle(img.parentElement).zIndex) < Number(getComputedStyle(document.querySelector('.hero-copy')).zIndex),
       overflow: document.documentElement.scrollWidth > innerWidth,
     }
   })
   assert.deepEqual(stage, { fits: true, events: 'none', dimmed: true, behindCopy: true, overflow: false })
-  assert.equal(await page.locator('.hero-card canvas').count(), 0, 'the retired ring shader is gone')
+  assert.equal(await page.locator('.hero-card canvas:not(.metal-rim canvas):not(.hero-lines)').count(), 0, 'the retired ring shader is gone')
+
+  // Liquid metal: each nav surface carries a live shader rim (a WebGL canvas that actually drew
+  // something) behind a black face inset 2px.
+  const metal = await page.locator('.hero-links').evaluate(el => {
+    const c = el.querySelector('.metal-rim canvas'), face = el.querySelector('.metal-face')
+    const gl = c?.getContext('webgl2'), r = c?.getBoundingClientRect(), box = el.getBoundingClientRect()
+    let lit = false
+    if (gl) { const px = new Uint8Array(4); gl.readPixels(2, Math.floor(c.height / 2), 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px); lit = px[3] > 0 }
+    return { canvas: !!c, fills: !!r && Math.abs(r.width - box.width) < 2, face: !!face && getComputedStyle(face).inset === '2px', lit }
+  })
+  assert.deepEqual({ canvas: metal.canvas, fills: metal.fills, face: metal.face }, { canvas: true, fills: true, face: true })
   assert.equal(await ticks.count(), 4, 'one tick per service pillar')
   assert.match(await count(), /^01\s*\/\s*04$/, 'the counter starts at the first frame')
 
@@ -120,9 +131,19 @@ try {
   })
   assert.deepEqual(layout, { fillsScreen: true, copyAtBottom: true, ctaOnScreen: true, pauseClear: true })
   await mobile.screenshot({ path: 'artifacts/hero-mobile.png' })
+  // The menu pill morphs open in place: links visible and focused, inside the viewport,
+  // and Escape folds it back with focus returned to the pill.
   await mobile.getByRole('button', { name: 'Open menu', exact: true }).first().click()
-  await mobile.getByRole('dialog', { name: 'Menu' }).waitFor()
-  await mobile.getByRole('button', { name: 'Close menu' }).click()
+  const menuNav = mobile.getByRole('navigation', { name: 'Menu' })
+  await menuNav.waitFor()
+  await mobile.waitForTimeout(900)
+  const panel = await mobile.locator('.mm-surface').first().boundingBox()
+  assert.ok(panel.x >= 0 && panel.x + panel.width <= 390 + 1, 'the open menu stays on screen')
+  assert.equal(await mobile.evaluate(() => document.activeElement?.classList.contains('mm-item')), true, 'focus lands on the first link')
+  await mobile.screenshot({ path: 'artifacts/menu-mobile.png' })
+  await mobile.keyboard.press('Escape')
+  await menuNav.waitFor({ state: 'hidden' })
+  assert.equal(await mobile.evaluate(() => document.activeElement?.getAttribute('aria-label')), 'Open menu', 'focus returns to the pill')
 
   // Without the photography the hero still has to read: the gradient stands in.
   const bare = await context.newPage()

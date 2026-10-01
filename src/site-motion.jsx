@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { MotionConfig, useAnimationFrame } from 'motion/react'
 
-const MotionContext = createContext({ reduced: false, toggle: () => {}, lenisRef: { current: null } })
+const MotionContext = createContext({ reduced: false, toggle: () => {}, theme: 'dark', toggleTheme: () => {}, lenisRef: { current: null } })
 
 // Follows the device setting live (motion's own hook only reads it once).
 function useSystemReducedMotion() {
@@ -30,6 +30,20 @@ export function SiteMotion({ children }) {
   useEffect(() => {
     document.documentElement.classList.toggle('motion-paused', reduced)
   }, [reduced])
+  // Theme rides alongside the motion preference: same storage, same html class, one place
+  // that owns what the visitor has chosen. index.html applies it before first paint, so the
+  // starting value is read from the class rather than assumed dark and corrected after.
+  const [theme, setTheme] = useState('dark')
+  useEffect(() => {
+    setTheme(document.documentElement.classList.contains('light') ? 'light' : 'dark')
+  }, [])
+  const toggleTheme = () => setTheme(value => {
+    const next = value === 'dark' ? 'light' : 'dark'
+    try { localStorage.setItem('creatix-theme', next) } catch { /* Storage is optional. */ }
+    document.documentElement.classList.toggle('light', next === 'light')
+    return next
+  })
+
   const toggle = () => setPaused(value => {
     try { localStorage.setItem('creatix-motion', value ? 'on' : 'off') } catch { /* Storage is optional. */ }
     return !value
@@ -68,7 +82,7 @@ export function SiteMotion({ children }) {
   // the hero, the reading-reveal paragraph and the process steps.
   useAnimationFrame(time => lenisRef.current?.raf(time))
 
-  return <MotionContext.Provider value={{ reduced, toggle, systemReduced, lenisRef }}>
+  return <MotionContext.Provider value={{ reduced, toggle, systemReduced, theme, toggleTheme, lenisRef }}>
     <MotionConfig reducedMotion={reduced ? 'always' : 'never'}>{children}</MotionConfig>
   </MotionContext.Provider>
 }

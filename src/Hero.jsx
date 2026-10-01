@@ -1,24 +1,20 @@
 import { useEffect, useRef, useState } from 'react'
-import { AnimatePresence, motion, useScroll, useTransform } from 'motion/react'
+import { motion, useScroll, useTransform } from 'motion/react'
 import { ArrowLeftIcon, ArrowRightIcon, ArrowUpRightIcon, PauseIcon, PlayIcon, WhatsappLogoIcon } from '@phosphor-icons/react'
 import { useReducedMotion } from './site-motion.jsx'
 import { DISCIPLINES } from './StudioSections.jsx'
 import { wa } from './content.js'
 import { Display, LineMask, MicroLabel, MotionLink, SiteNav, press } from './ui.jsx'
 import { Link } from './router.jsx'
+import ShaderLines from '@/components/ui/shader-lines'
+import { useLiquidMetal } from '@/components/ui/liquid-metal'
 
-// One frame per service pillar. Only abstract, text-free photography is usable here:
-// web-ui.jpg and automate.jpg are screenshots whose own typography competes with the
-// headline, which is exactly how stock imagery gives itself away. The heavy scrim plus
-// brightness(0.4) is what turns the rest into texture behind the type.
-const SLIDES = DISCIPLINES.map((d, i) => ({
-  ...d,
-  img: ['/img/team-collab.jpg', '/img/circuit.jpg', '/img/glass-sculpture.webp', '/img/network.jpg'][i],
-}))
+const SLIDES = DISCIPLINES
 const HOLD = 6500
 
-export default function Hero({ onTalk, onMenu }) {
+export default function Hero({ onTalk }) {
   const reduce = useReducedMotion()
+  const waMetal = useLiquidMetal()
   const [paused, setPaused] = useState(false)
   const [i, setI] = useState(0)
   const ref = useRef(null)
@@ -45,26 +41,14 @@ export default function Hero({ onTalk, onMenu }) {
   return (
     <section id="top" ref={ref} className="hero">
       <div className="hero-card">
-        {/* Only the first frame is eager: the rest are a carousel below the fold of attention. */}
-        <div className="hero-stage" aria-hidden="true">
-          <AnimatePresence initial={false}>
-            <motion.img
-              key={slide.img}
-              className="hero-shot"
-              src={slide.img}
-              alt=""
-              loading={i === 0 ? 'eager' : 'lazy'}
-              decoding="async"
-              initial={reduce ? { opacity: 1 } : { opacity: 0, scale: 1.06 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ opacity: { duration: 1.1, ease: [0.22, 1, 0.36, 1] }, scale: { duration: HOLD / 1000 + 1.2, ease: 'linear' } }}
-            />
-          </AnimatePresence>
+        {/* Live shader instead of photography: green light lines rippling out from the open
+            half of the card. No image bytes, and the scrim below keeps it behind the type. */}
+        <div className="hero-stage">
+          <ShaderLines className="hero-lines" reduced={reduce} />
         </div>
         <div className="hero-scrim" />
 
-        <SiteNav onTalk={onTalk} onMenu={onMenu} />
+        <SiteNav onTalk={onTalk} />
 
         <motion.div className="hero-copy" style={still ?? { y: copyY, opacity: fade }}>
           <MicroLabel className="hero-kicker">Independent thinking · Connected solutions · Jaipur</MicroLabel>
@@ -77,7 +61,7 @@ export default function Hero({ onTalk, onMenu }) {
           <p className="hero-text">Creative minds. Precise engineering. We turn your next big idea into something that moves your business.</p>
           <div className="hero-cta">
             <MotionLink className="pill pill-red pill-lg" to="/services" {...press}>Explore what we do<ArrowUpRightIcon size={18} weight="bold" /></MotionLink>
-            <motion.a className="pill pill-glass pill-lg" href={wa('Hi Creatix, I want to know more about your services.')} target="_blank" rel="noreferrer" {...press}>
+            <motion.a ref={waMetal} className="pill pill-glass pill-lg" href={wa('Hi Creatix, I want to know more about your services.')} target="_blank" rel="noreferrer" {...press}>
               <WhatsappLogoIcon size={20} weight="fill" />WhatsApp us
             </motion.a>
           </div>

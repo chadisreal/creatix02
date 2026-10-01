@@ -7,10 +7,12 @@
 // `.motion-paused *` rule switch all of them off without a JS branch per component.
 import { useEffect, useRef, useState } from 'react'
 import { motion, animate, useInView } from 'motion/react'
-import { ArrowUpRightIcon, ListIcon, PhoneIcon } from '@phosphor-icons/react'
+import { ArrowUpRightIcon, MoonStarsIcon, PhoneIcon, SunIcon } from '@phosphor-icons/react'
 import { CONTACT } from './content.js'
 import { findRoute } from './routes.js'
-import { useReducedMotion } from './site-motion.jsx'
+import { useReducedMotion, useSiteMotion } from './site-motion.jsx'
+import MorphMenu from '@/components/ui/morph-menu'
+import { useLiquidMetal } from '@/components/ui/liquid-metal'
 import { Link, useRouter } from './router.jsx'
 
 /* ---------- Motion vocabulary ---------- */
@@ -60,20 +62,23 @@ export const MotionLink = motion.create(Link)
 // It also has to branch on reduced motion rather than leaning on MotionConfig: the resting
 // state is off-mask, so anything that declines to animate the transform would leave the
 // text invisible rather than merely still.
-export function LineMask({ children, delay = 0, className, amount = 0.6 }) {
+// `inherit` hands the timing to the nearest animating parent instead of this line watching
+// the viewport for itself: variant labels propagate down, so the mask passes the parent's
+// label through to the line. The menu drives its links that way, because a whileInView line
+// starts its own clock the moment it mounts and ends up racing the entrance around it.
+export function LineMask({ children, delay = 0, className, amount = 0.6, inherit = false, variants }) {
   const reduce = useReducedMotion()
   if (reduce) return <span className={['line', className].filter(Boolean).join(' ')}>{children}</span>
+  const watch = inherit ? {} : { initial: 'rest', whileInView: 'shown', viewport: { once: true, amount } }
   return (
     <motion.span
       className="line-mask"
-      initial="rest"
-      whileInView="shown"
-      viewport={{ once: true, amount }}
+      {...watch}
     >
       <motion.span
         className={['line', className].filter(Boolean).join(' ')}
-        variants={{ rest: { y: '112%' }, shown: { y: '0%' } }}
-        transition={{ duration: 1, ease: EASE_DRAMA, delay }}
+        variants={variants ?? { rest: { y: '112%' }, shown: { y: '0%' } }}
+        transition={inherit ? undefined : { duration: 1, ease: EASE_DRAMA, delay }}
       >
         {children}
       </motion.span>
@@ -195,28 +200,94 @@ export function useNavCurrent() {
   return to => to === route.path || to === route.parent
 }
 
-export function Brand({ light = false }) {
+// Extra props reach the Link: the menu passes onClick so the logo closes it on the way home,
+// which it previously did not, leaving the menu open over a page that had navigated.
+/* ---------- Theme switch ---------- */
+
+// The click. A 30ms noise burst through a bandpass is a switch; a sine blip is a doorbell.
+// Synthesised rather than shipped as a file: no asset to host, no request, no decode.
+// One context for the page, built on the first click because browsers block audio until a
+// gesture, and resumed each time in case the tab was backgrounded in between.
+let audio
+function playSwitch() {
+  const AC = window.AudioContext ?? window.webkitAudioContext
+  if (!AC) return
+  try {
+    audio ??= new AC()
+    if (audio.state === 'suspended') audio.resume()
+    const len = Math.floor(audio.sampleRate * 0.03)
+    const buffer = audio.createBuffer(1, len, audio.sampleRate)
+    const data = buffer.getChannelData(0)
+    // Cubic decay: all the energy in the first few milliseconds, like a contact closing.
+    for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / len) ** 3
+    const source = audio.createBufferSource()
+    source.buffer = buffer
+    const band = audio.createBiquadFilter()
+    band.type = 'bandpass'
+    band.frequency.value = 2400
+    band.Q.value = 1.4
+    const gain = audio.createGain()
+    gain.gain.value = 0.28
+    source.connect(band).connect(gain).connect(audio.destination)
+    source.start()
+  } catch { /* Sound is a nicety and must never take the toggle down with it. */ }
+}
+
+// Dark/light, as a real switch: the knob springs across and carries the click with it.
+// role="switch" + aria-checked is the native semantic, so screen readers announce a state
+// rather than a button whose label has to explain itself.
+export function ThemeToggle({ className = '' }) {
+  const { theme, toggleTheme } = useSiteMotion()
+  const reduce = useReducedMotion()
+  const light = theme === 'light'
   return (
-    <Link className={'brand' + (light ? ' brand-light' : '')} to="/" aria-label="Creatix Innovation, home">
-      <img src="/img/creatix-mark.png" alt="" width="32" height="32" />
+    <button
+      type="button"
+      role="switch"
+      aria-checked={light}
+      aria-label="Light mode"
+      className={['theme-toggle', className].filter(Boolean).join(' ')}
+      onClick={() => { playSwitch(); toggleTheme() }}
+    >
+      <SunIcon size={13} weight="bold" aria-hidden="true" />
+      <MoonStarsIcon size={13} weight="bold" aria-hidden="true" />
+      <motion.span
+        className="theme-knob"
+        aria-hidden="true"
+        /* Knob sits over the mode you are NOT in, so the icon left showing is the current
+           one: dark leaves the moon visible, light leaves the sun. */
+        animate={{ x: light ? 26 : 0 }}
+        transition={reduce ? { duration: 0.12 } : { type: 'spring', stiffness: 500, damping: 30 }}
+      />
+    </button>
+  )
+}
+
+export function Brand({ light = false, ...props }) {
+  return (
+    <Link className={'brand' + (light ? ' brand-light' : '')} to="/" aria-label="Creatix Innovation, home" {...props}>
+      <img className="on-dark" src="/img/creatix-mark.png" alt="" width="32" height="32" />
+      <img className="on-light" src="/img/creatix-mark-ink.png" alt="" width="32" height="32" />
       <span>Creatix <b>Innovation</b></span>
     </Link>
   )
 }
 
 // The navigation that sits over the top of every page's hero.
-export function SiteNav({ onTalk, onMenu }) {
+export function SiteNav({ onTalk }) {
   const isCurrent = useNavCurrent()
+  const linksMetal = useLiquidMetal()
+  const phoneMetal = useLiquidMetal()
   return (
     <header className="hero-nav">
       <Brand light />
-      <nav className="hero-links" aria-label="Main">
+      <nav ref={linksMetal} className="hero-links" aria-label="Main">
         {NAV.map(n => <Link key={n.to} to={n.to} aria-current={isCurrent(n.to) ? 'page' : undefined}>{n.label}</Link>)}
       </nav>
       <div className="hero-actions">
-        <a className="pill pill-glass hide-sm" href={CONTACT.phoneHref}><PhoneIcon size={16} weight="bold" />{CONTACT.phone}</a>
+        <a ref={phoneMetal} className="pill pill-glass hide-sm" href={CONTACT.phoneHref}><PhoneIcon size={16} weight="bold" />{CONTACT.phone}</a>
         <motion.button type="button" className="pill pill-white" onClick={onTalk} {...press}>Let's Talk<ArrowUpRightIcon size={16} weight="bold" /></motion.button>
-        <button type="button" className="pill pill-glass icon-only show-sm" onClick={onMenu} aria-label="Open menu"><ListIcon size={20} weight="bold" /></button>
+        <MorphMenu />
       </div>
     </header>
   )

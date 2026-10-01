@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion, AnimatePresence, useMotionValueEvent, useScroll } from 'motion/react'
-import { CheckCircleIcon, CheckIcon, ListIcon, PaperPlaneTiltIcon, PhoneIcon, WhatsappLogoIcon, XIcon } from '@phosphor-icons/react'
+import { CheckCircleIcon, CheckIcon, PaperPlaneTiltIcon, WhatsappLogoIcon, XIcon } from '@phosphor-icons/react'
 import { MotionToggle, ReadingProgress } from './StudioSections.jsx'
 import { Page } from './pages.jsx'
 import { PAGES, findRoute, headTags } from './routes.js'
 import { Link, Router, screenOf, useRouter } from './router.jsx'
-import { Brand, LineMask, Marquee, MicroLabel, NAV, press, useNavCurrent } from './ui.jsx'
-import { useLenis } from './site-motion.jsx'
+import { Brand, Marquee, MicroLabel, NAV, press, useNavCurrent } from './ui.jsx'
+import MorphMenu from '@/components/ui/morph-menu'
+import { usePixelButtons } from '@/components/ui/pixel-button'
+import { useLiquidMetal } from '@/components/ui/liquid-metal'
+import { useLenis, useReducedMotion } from './site-motion.jsx'
 import { CONTACT, INQUIRY_SERVICES, SERVICES, wa } from './content.js'
 import { catLabel } from './sections.jsx'
 
@@ -60,7 +63,7 @@ function Site() {
   const screen = screenOf(bg ?? path)
   const sheet = bg && route.page === 'service' ? route : null
   const [talk, setTalk] = useState(null) // { x, y, service }
-  const [menu, setMenu] = useState(false)
+  usePixelButtons()
   const [moved, setMoved] = useState(false)
   const shownScreen = useRef(screen)
   const ui = useMemo(() => ({
@@ -68,7 +71,6 @@ function Site() {
       const r = e?.currentTarget?.getBoundingClientRect?.()
       setTalk({ x: r ? r.left + r.width / 2 : innerWidth / 2, y: r ? r.top + r.height / 2 : innerHeight / 2, service: svc })
     },
-    onMenu: () => setMenu(true),
   }), [])
 
   // Keep the title, description, canonical link and structured data in step with the address.
@@ -88,7 +90,7 @@ function Site() {
     <>
       <a href="#main" className="skip-link">Skip to content</a>
       <ReadingProgress />
-      <FloatingNav onTalk={ui.onTalk} onMenu={ui.onMenu} />
+      <FloatingNav onTalk={ui.onTalk} />
       <main id="main" tabIndex={-1} key={screen} className={moved ? 'page-in' : undefined}>
         <Page route={screen === '/' ? PAGES[0] : findRoute(screen)} ui={ui} />
       </main>
@@ -100,19 +102,17 @@ function Site() {
       <AnimatePresence>
         {talk && <TalkSheet key="talk" origin={talk} onClose={() => setTalk(null)} />}
       </AnimatePresence>
-      <AnimatePresence>
-        {menu && <MenuSheet key="menu" onClose={() => setMenu(false)} onTalk={e => { setMenu(false); ui.onTalk(e) }} />}
-      </AnimatePresence>
     </>
   )
 }
 
 /* ---------- Floating capsule nav: materialises once the page's hero is behind you ---------- */
 
-function FloatingNav({ onTalk, onMenu }) {
+function FloatingNav({ onTalk }) {
   const { scrollY } = useScroll()
   const [shown, setShown] = useState(false)
   const isCurrent = useNavCurrent()
+  const metal = useLiquidMetal()
   useMotionValueEvent(scrollY, 'change', y => {
     const hero = document.querySelector('main > :first-child')
     setShown(y > (hero?.offsetHeight ?? innerHeight) * 0.85)
@@ -121,12 +121,12 @@ function FloatingNav({ onTalk, onMenu }) {
   return (
     <AnimatePresence>
       {shown && (
-        <motion.header className="float-nav"
-          initial={{ y: -24, opacity: 0, scale: 0.94, filter: 'blur(8px)' }}
-          animate={{ y: 0, opacity: 1, scale: 1, filter: 'blur(0px)' }}
-          exit={{ y: -24, opacity: 0, scale: 0.94, filter: 'blur(8px)' }}
+        <motion.header ref={metal} className="float-nav tone-dark"
+          initial={{ y: -24, opacity: 0, scale: 0.94 }}
+          animate={{ y: 0, opacity: 1, scale: 1 }}
+          exit={{ y: -24, opacity: 0, scale: 0.94 }}
           transition={{ type: 'spring', stiffness: 380, damping: 32 }}>
-          <Brand />
+          <Brand light />
           <nav className="float-links" aria-label="Main">
             {NAV.map(n => (
               <Link key={n.to} to={n.to} className={isCurrent(n.to) ? 'is-on' : ''} aria-current={isCurrent(n.to) ? 'page' : undefined}>
@@ -136,7 +136,7 @@ function FloatingNav({ onTalk, onMenu }) {
             ))}
           </nav>
           <motion.button type="button" className="pill pill-red" onClick={onTalk} {...press}>Let's Talk</motion.button>
-          <button type="button" className="pill pill-quiet icon-only show-sm" onClick={onMenu} aria-label="Open menu"><ListIcon size={20} weight="bold" /></button>
+          <MorphMenu />
         </motion.header>
       )}
     </AnimatePresence>
@@ -164,7 +164,8 @@ function Footer() {
 
       <div className="wrap footer-cols">
         <div className="footer-brand">
-          <img src="/img/creatix-logo.png" alt="Creatix Innovation" width="92" height="88" loading="lazy" />
+          <img className="on-dark" src="/img/creatix-logo-dark.png" alt="Creatix Innovation" width="130" height="88" loading="lazy" />
+          <img className="on-light" src="/img/creatix-logo-ink.png" alt="Creatix Innovation" width="130" height="88" loading="lazy" />
           <p>Powering Digital Excellence. Your partner in digital transformation and innovation.</p>
         </div>
         {cols.map(([title, items]) => (
@@ -334,58 +335,4 @@ function Field({ id, label, error, wide, children }) {
   )
 }
 
-// Mobile menu: a bottom sheet you can drag down to dismiss.
-function MenuSheet({ onClose, onTalk }) {
-  const layerRef = useSheet(onClose)
-  const close = useRef(null)
-  useEffect(() => { close.current?.focus({ preventScroll: true }) }, [])
-  const items = [{ to: '/', label: 'Home' }, ...NAV]
-  return (
-    <div ref={layerRef} className="sheet-layer menu-layer" role="dialog" aria-modal="true" aria-label="Menu">
-      <motion.div className="scrim" onClick={onClose} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} />
-      {/* A full-screen curtain on the dramatic curve, with the links masked in behind it. */}
-      <motion.div
-        className="menu"
-        initial={{ clipPath: 'inset(0 0 100% 0)' }}
-        animate={{ clipPath: 'inset(0 0 0% 0)' }}
-        exit={{ clipPath: 'inset(0 0 100% 0)' }}
-        transition={{ duration: 0.8, ease: [0.76, 0, 0.24, 1] }}
-      >
-        <div className="menu-top">
-          <Brand light />
-          <button ref={close} type="button" className="menu-close" onClick={onClose} aria-label="Close menu">
-            <span>Close</span><XIcon size={18} weight="bold" />
-          </button>
-        </div>
-
-        <nav className="menu-nav" aria-label="Sections">
-          {items.map((n, i) => (
-            <Link key={n.to} to={n.to} onClick={onClose}>
-              <span className="menu-index" aria-hidden="true">[{String(i + 1).padStart(2, '0')}]</span>
-              <LineMask amount={0} delay={0.18 + i * 0.06}>{n.label}</LineMask>
-            </Link>
-          ))}
-        </nav>
-
-        <div className="menu-foot">
-          <div>
-            <MicroLabel as="p" dot={false}>Start a project</MicroLabel>
-            <div className="menu-actions">
-              <motion.button type="button" className="pill pill-red pill-lg" onClick={onTalk} {...press}>Let's Talk</motion.button>
-              <a className="pill pill-outline pill-lg" href={CONTACT.phoneHref}><PhoneIcon size={18} weight="bold" />{CONTACT.phone}</a>
-            </div>
-          </div>
-          <div>
-            <MicroLabel as="p" dot={false}>Elsewhere</MicroLabel>
-            <ul className="menu-links">
-              <li><a href={'mailto:' + CONTACT.email}>{CONTACT.email}</a></li>
-              <li><a href={wa('Hi Creatix, I would like a free consultation.')} target="_blank" rel="noreferrer">WhatsApp</a></li>
-              <li>{CONTACT.location}</li>
-            </ul>
-          </div>
-        </div>
-      </motion.div>
-    </div>
-  )
-}
 

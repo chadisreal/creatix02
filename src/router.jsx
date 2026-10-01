@@ -50,16 +50,20 @@ export function Router({ url, children }) {
     // the one page, that cache still holds the short page's height, so the scroll lands
     // short of the section. Re-measure before every glide; it only runs on navigation.
     lenis.resize()
+    // force: Lenis refuses a programmatic scroll while it is stopped or locked, and a sheet
+    // stops it for as long as it is open (useSheet). Without this, every link inside the
+    // full-screen menu changed the address and left the page exactly where it was.
     if (smooth && !calm()) {
       // Kept under a second: check-pages.mjs waits 1400ms before asserting where a nav
       // click landed, and Lenis's own default is around 1.2s.
       lenis.scrollTo(top, {
         duration: 0.85,
         lock: true,
+        force: true,
         onComplete: () => { gliding.current = false; spy() },
       })
     } else {
-      lenis.scrollTo(top, { immediate: true })
+      lenis.scrollTo(top, { immediate: true, force: true })
     }
   }
 
@@ -131,7 +135,10 @@ export function Router({ url, children }) {
     glide((target.id ? topOf(target.id) : target.y) ?? 0, false)
   }, [state])
 
-  const navigate = to => {
+  // instant: land the page without the glide. The menu navigates this way because it is
+  // still covering the screen — the section is in place before the curtain lifts off it,
+  // which also keeps the scroll clear of lenis.start(), whose reset() aborts one in flight.
+  const navigate = (to, { instant = false } = {}) => {
     const next = new URL(to, location.href)
     const path = normalizePath(next.pathname)
     const route = findRoute(path)
@@ -152,7 +159,7 @@ export function Router({ url, children }) {
       const top = topOf(id) ?? 0
       if (path !== here || bg) history.pushState({ y: top }, '', path + next.search)
       setState({ path, bg: null })
-      glide(top, true)
+      glide(top, !instant)
       return
     }
     history.pushState({ y: 0 }, '', path + next.search)
@@ -172,12 +179,12 @@ export function Router({ url, children }) {
 }
 
 // A normal <a href>, so crawlers and new-tab clicks work; plain clicks stay inside the app.
-export function Link({ to, onClick, ...props }) {
+export function Link({ to, onClick, instant = false, ...props }) {
   const { navigate } = useRouter()
   return <a href={to} {...props} onClick={e => {
     onClick?.(e)
     if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || props.target) return
     e.preventDefault()
-    navigate(to)
+    navigate(to, { instant })
   }} />
 }

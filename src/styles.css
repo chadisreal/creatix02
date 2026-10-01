@@ -79,10 +79,12 @@
   --bg: #0b0b0b;
   --paper: #1a1a1a;
   --ink: #ffffff;
+  --ink-rgb: 255 255 255;
   --ink-2: #dcdcdc;
   --ink-3: #8a8a8a;
   --accent: #34bb7b;
   --accent-rgb: 52 187 123;
+  --on-accent: #0b0b0b;
   /* Hairlines are decorative only: #222 is 1.24:1 and must never bound a control.
      --line-strong is the 3:1 floor that form fields and inputs need (WCAG 1.4.11). */
   --line: rgb(255 255 255 / 0.10);
@@ -109,8 +111,97 @@
   --fs-h3: clamp(1.5rem, 2.6vw, 2.4rem);
   --r-stage: 0px;
   --r-card: 0px;
+  /* Imagery and the cards that carry it: soft, continuous corners (see Image surfaces). */
+  --r-media: clamp(18px, 1.6vw + 8px, 30px);
   --gutter: clamp(16px, 4vw, 56px);
   color-scheme: dark;
+}
+
+/* Light mode. Only the tokens move: every section reads through var(), so the page turns
+   over without a per-section light rule. --accent darkens because the dark-mode green is
+   2.3:1 on white — unreadable as text — and at this value it also carries white text as a
+   fill. index.html adds .light before first paint; ThemeToggle flips it after. */
+html.light {
+  /* A warm paper ground rather than near-white: --paper cards need something to sit on,
+     and at #f6f6f4 the two were 2% apart, so nothing read as a card. */
+  --bg: #f2f1ed;
+  --paper: #ffffff;
+  /* Off-black, not #000. The display type here runs to 14rem; pure black at that size
+     is a slab, and the brand's near-black is #0b0b0b on its own ground, not on paper. */
+  --ink: #14151a;
+  --ink-rgb: 20 21 26;
+  --ink-2: #44464d;
+  --ink-3: #6b6e76;
+  --accent: #10714a;
+  --accent-rgb: 16 113 74;
+  --line: rgb(20 21 26 / 0.14);
+  --line-strong: #767676;
+  --tint: rgb(20 21 26 / 0.05);
+  --tint-2: rgb(20 21 26 / 0.09);
+  --red-press: #0b573a;
+  /* The one token that was wrong rather than merely pale: --navy is the feature-panel
+     surface (results, page hero, tone-dark cards and sheets) and it aliased --paper, so
+     in light mode every one of them turned white while keeping its white text. It stays
+     dark here — which is also the design: a light page carrying dark panels, not an
+     inversion. Everything below reads through var(), so this single value turns them all. */
+  --navy: #14161b;
+  --navy-2: #e8e8e4;
+  --on-accent: #ffffff;
+  color-scheme: light;
+}
+/* Imagery is dimmed to sit on a dark page. On paper the same dimming is just murk. */
+html.light .frame img { filter: brightness(0.92); }
+@media (hover: hover) and (pointer: fine) {
+  html.light .frame:hover img { filter: brightness(1); }
+}
+/* The faint white grid is the page's texture; in ink it is the same texture on paper. */
+html.light body { background-image: linear-gradient(rgb(20 21 26 / 0.035) 1px, transparent 1px), linear-gradient(90deg, rgb(20 21 26 / 0.035) 1px, transparent 1px); }
+
+/* The surfaces that stay dark when the page turns light: the photographic hero and page
+   hero, the results panel, the contact card, and any tone-dark/tone-photo card or sheet.
+   They are islands of the dark theme, so they get the dark theme's tokens back — white ink
+   and the vivid green, which the light-mode values would otherwise have muddied on them.
+   Restating tokens beats restating components: nothing inside these needs its own rule. */
+html.light .hero-card,
+html.light .page-hero-card,
+html.light .results-card,
+html.light .contact-card,
+html.light .tone-dark,
+html.light .tone-photo {
+  --bg: #0b0b0b;
+  --paper: #1a1a1a;
+  --ink: #ffffff;
+  --ink-rgb: 255 255 255;
+  --ink-2: #dcdcdc;
+  --ink-3: #8a8a8a;
+  --accent: #34bb7b;
+  --accent-rgb: 52 187 123;
+  --on-accent: #0b0b0b;
+  --line: rgb(255 255 255 / 0.10);
+  --line-strong: #606060;
+  --tint: rgb(255 255 255 / 0.06);
+  --tint-2: rgb(255 255 255 / 0.12);
+  color-scheme: dark;
+}
+
+/* ---------- Theme switch ---------- */
+
+.theme-toggle {
+  position: relative; display: inline-flex; align-items: center; justify-content: space-between;
+  flex: none; width: 58px; height: 32px; padding: 0 7px; border: 0; border-radius: 999px;
+  background: var(--tint-2); box-shadow: inset 0 0 0 1px var(--line);
+  color: var(--ink-3); cursor: pointer; -webkit-tap-highlight-color: transparent;
+  transition: background 0.3s var(--ease), box-shadow 0.3s;
+}
+.theme-toggle:hover { box-shadow: inset 0 0 0 1px rgb(var(--accent-rgb) / 0.55); }
+.theme-toggle svg { position: relative; z-index: 1; }
+/* --ink flips with the theme, so the knob is white on the dark pill and black on the light
+   one without a second rule — the switch in the reference, both states. */
+/* Above the icons, not behind them: the knob covers the mode you are not in, leaving one
+   icon showing. A knob you can see an icon through reads as decoration, not position. */
+.theme-knob {
+  position: absolute; top: 3px; left: 3px; z-index: 2; width: 26px; height: 26px; border-radius: 50%;
+  background: var(--ink); box-shadow: 0 2px 6px rgb(0 0 0 / 0.35);
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -148,8 +239,8 @@ input, select, textarea, button { font: inherit; color: inherit; }
   .liquid-glass {
     color: transparent;
     -webkit-text-fill-color: transparent;
-    -webkit-text-stroke: 1.5px rgb(255 255 255 / 0.34);
-    background-image: linear-gradient(135deg, rgb(255 255 255 / 0.02) 0%, rgb(255 255 255 / 0.12) 28%, rgb(255 255 255 / 0.55) 50%, rgb(255 255 255 / 0.12) 72%, rgb(255 255 255 / 0.02) 100%);
+    -webkit-text-stroke: 1.5px rgb(var(--ink-rgb) / 0.34);
+    background-image: linear-gradient(135deg, rgb(var(--ink-rgb) / 0.02) 0%, rgb(var(--ink-rgb) / 0.12) 28%, rgb(var(--ink-rgb) / 0.55) 50%, rgb(var(--ink-rgb) / 0.12) 72%, rgb(var(--ink-rgb) / 0.02) 100%);
     background-size: 200% 100%;
     -webkit-background-clip: text;
     background-clip: text;
@@ -228,8 +319,8 @@ input, select, textarea, button { font: inherit; color: inherit; }
 .brand { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; font-size: 1.0625rem; font-weight: 500; letter-spacing: -0.02em; white-space: nowrap; }
 .brand img { width: 34px; height: 34px; }
 .brand b { font-weight: 500; color: var(--ink-3); }
-.brand-light { color: #fff; }
-.brand-light b { color: rgb(255 255 255 / 0.7); }
+.brand-light { color: var(--ink); }
+.brand-light b { color: var(--ink-2); }
 
 .pill {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
@@ -239,14 +330,13 @@ input, select, textarea, button { font: inherit; color: inherit; }
   transition: background-color 0.18s var(--ease), color 0.18s var(--ease), box-shadow 0.18s var(--ease);
 }
 .pill-lg { height: 54px; padding: 0 26px; font-size: 1rem; }
-.pill-red { background: var(--red); color: var(--bg); box-shadow: 0 12px 26px -12px rgb(var(--accent-rgb) / 0.5); }
+.pill-red { --fill: var(--red); background: var(--fill); color: var(--on-accent); box-shadow: 0 12px 26px -12px rgb(var(--accent-rgb) / 0.5); }
 .pill-white { background: #fff; color: var(--bg); }
 .pill-glass { background: rgb(255 255 255 / 0.12); color: #fff; backdrop-filter: blur(16px) saturate(160%); -webkit-backdrop-filter: blur(16px) saturate(160%); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.24); }
 .pill-outline { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--line-strong); }
-.pill-quiet { background: rgb(255 255 255 / 0.06); color: var(--ink); }
+.pill-quiet { background: var(--tint); color: var(--ink); }
 .icon-only { width: 44px; padding: 0; }
 @media (hover: hover) and (pointer: fine) {
-  .pill-red:hover { background: var(--red-press); }
   .pill-white:hover { background: #F1F1F4; }
   .pill-glass:hover { background: rgb(255 255 255 / 0.22); }
   .pill-outline:hover { box-shadow: inset 0 0 0 1.5px var(--ink); }
@@ -299,24 +389,23 @@ input, select, textarea, button { font: inherit; color: inherit; }
   background: radial-gradient(ellipse 60% 80% at 70% 45%, #10241b 0%, #0d1512 45%, var(--bg) 80%);
 }
 .hero-stage { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
-.hero-shot { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: brightness(0.42) saturate(0.85); will-change: opacity, transform; }
+.hero-lines { position: absolute; inset: 0; width: 100%; height: 100%; display: block; opacity: 0.92; }
 .hero-scrim {
   position: absolute; inset: 0; z-index: 1; pointer-events: none;
   background:
-    linear-gradient(90deg, #0b0b0bfa 0%, #0b0b0be0 34%, #0b0b0b8c 66%, #0b0b0b4d 100%),
+    linear-gradient(90deg, #0b0b0bd9 0%, #0b0b0ba6 34%, #0b0b0b4d 66%, #0b0b0b1a 100%),
     linear-gradient(0deg, #0b0b0bf7 0%, #0b0b0b8c 28%, transparent 56%),
     linear-gradient(180deg, #0b0b0ba6, transparent 24%);
 }
 
-.hero-nav { position: absolute; top: 0; left: 0; right: 0; z-index: 5; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 20px; padding: 22px var(--gutter) 0; }
-.hero-links { display: flex; gap: 2px; padding: 5px; background: rgb(255 255 255 / 0.06); border: 1px solid rgb(255 255 255 / 0.10); }
+.hero-nav { position: absolute; top: 0; left: 0; right: 0; z-index: 6; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 20px; padding: 22px var(--gutter) 0; }
+.hero-links { display: flex; gap: 2px; padding: 5px; }
+.hero-links, .hero .pill-glass { position: relative; background: none; border: 0; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; }
 .hero-links a { padding: 10px 15px; color: rgb(255 255 255 / 0.76); font-family: var(--font-mono); font-size: 0.625rem; text-transform: uppercase; letter-spacing: 0.16em; text-decoration: none; transition: background-color 0.2s, color 0.2s; }
 .hero-links a:hover { background: rgb(255 255 255 / 0.12); color: #fff; }
 .hero-links a[aria-current="page"] { background: rgb(255 255 255 / 0.15); color: #fff; }
 .hero-actions { justify-self: end; display: flex; align-items: center; gap: 8px; }
-.hero .pill-glass { backdrop-filter: blur(14px) saturate(150%); -webkit-backdrop-filter: blur(14px) saturate(150%); }
-.hero .pill-red { background: var(--accent); color: var(--bg); box-shadow: none; }
-.hero .pill-red:hover { background: #4fd396; }
+.hero .pill-red { --fill: var(--accent); background: var(--fill); color: var(--on-accent); box-shadow: none; }
 
 .hero-copy { position: relative; z-index: 4; width: min(900px, 64%); padding-inline: var(--gutter); }
 .hero-kicker { display: flex; align-items: center; gap: 10px; margin: 0; color: rgb(255 255 255 / 0.72); }
@@ -392,27 +481,22 @@ input, select, textarea, button { font: inherit; color: inherit; }
   .hero-cta { margin-top: 24px; }
   .hero-cta .pill-lg { flex: none; font-size: 0.875rem; padding: 0 16px; }
   .hero-pause { top: 78px; right: 18px; }
-  .hero-shot { filter: brightness(0.38) saturate(0.85); }
 }
 
 /* Frosted glass over a moving canvas re-blurs every frame; a flat tint reads the same and costs nothing. */
-
-/* ---------- Frosted glass tiles (contact) ---------- */
-
-/* Sheen that follows the pointer across the glass. */
-/* The selected pane clears: no frost, a bright edge, the photo behind in focus. */
 
 /* ---------- Floating nav ---------- */
 
 .float-nav {
   position: fixed; top: 14px; left: 50%; z-index: 60; translate: -50% 0;
   display: flex; align-items: center; gap: 16px; padding: 6px 6px 6px 12px; border-radius: 0;
-  background: rgb(18 18 18 / 0.72);
-  backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%);
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.10), 0 24px 50px -24px rgb(0 0 0 / 0.8);
+  /* Liquid metal, like the other nav surfaces: see .metal at the end of this file. */
+  isolation: isolate;
+  box-shadow: 0 18px 44px -20px rgb(0 0 0 / 0.7);
 }
 .float-nav .brand span { display: none; }
 .float-links { display: flex; gap: 2px; }
+.float-links a, .hero-links a, .hero .pill-glass { text-shadow: 0 1px 3px rgb(0 0 0 / 0.75); }
 .float-links a { position: relative; padding: 10px 14px; color: var(--ink-3); font-family: var(--font-mono); font-size: 0.625rem; text-transform: uppercase; letter-spacing: 0.16em; text-decoration: none; transition: color 0.2s; }
 .float-links a.is-on, .float-links a:hover { color: var(--ink); }
 .float-links a span { position: relative; }
@@ -450,7 +534,7 @@ input, select, textarea, button { font: inherit; color: inherit; }
   border: 1px solid var(--line-strong); color: var(--ink); text-decoration: none; font-size: 0.875rem;
   transition: background-color 0.25s, border-color 0.25s, color 0.25s;
 }
-.discipline-services a:hover { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+.discipline-services a:hover { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 
 .bento { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: 236px; grid-auto-flow: dense; gap: 14px; margin: 0; padding: 0; list-style: none; }
 .size-w { grid-column: span 2; }
@@ -475,11 +559,11 @@ input, select, textarea, button { font: inherit; color: inherit; }
 .card-text { display: block; margin-top: 8px; font-size: 0.9375rem; line-height: 1.45; color: var(--ink-2); }
 .size-s .card-text { display: -webkit-box; overflow: hidden; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .tone-dark .card-text, .tone-photo .card-text { color: rgb(255 255 255 / 0.76); }
-.card-go { position: absolute; top: 18px; right: 18px; width: 40px; height: 40px; display: grid; place-items: center; border-radius: 50%; background: rgb(255 255 255 / 0.06); transition: transform 0.4s var(--ease), background-color 0.25s, color 0.25s; }
-.tone-dark .card-go, .tone-photo .card-go { background: rgb(255 255 255 / 0.14); }
+.card-go { position: absolute; top: 18px; right: 18px; width: 40px; height: 40px; display: grid; place-items: center; border-radius: 50%; background: var(--tint); transition: transform 0.4s var(--ease), background-color 0.25s, color 0.25s; }
+.tone-dark .card-go, .tone-photo .card-go { background: var(--tint-2); }
 @media (hover: hover) and (pointer: fine) {
   .card-btn:hover .card-img { transform: scale(1.03); filter: brightness(0.72); }
-  .card-btn:hover .card-go { transform: rotate(45deg); background: var(--red); color: #fff; }
+  .card-btn:hover .card-go { transform: rotate(45deg); background: var(--red); color: var(--on-accent); }
 }
 
 /* ---------- Sheets ---------- */
@@ -489,8 +573,8 @@ input, select, textarea, button { font: inherit; color: inherit; }
 .sheet { position: relative; width: min(680px, 100%); max-height: calc(100dvh - 40px); overflow: auto; overscroll-behavior: contain; border-radius: 0; background: var(--paper); color: var(--ink); box-shadow: 0 50px 120px -40px rgb(0 0 0 / 0.7); }
 .sheet.tone-dark, .sheet.tone-photo { background: var(--navy); color: #fff; }
 .sheet-body, .talk { padding: clamp(24px, 4vw, 40px); }
-.sheet-close { position: absolute; top: 16px; right: 16px; z-index: 2; width: 44px; height: 44px; display: grid; place-items: center; border: 0; border-radius: 50%; background: rgb(255 255 255 / 0.07); cursor: pointer; }
-.tone-dark .sheet-close, .tone-photo .sheet-close { background: rgb(255 255 255 / 0.12); color: #fff; }
+.sheet-close { position: absolute; top: 16px; right: 16px; z-index: 2; width: 44px; height: 44px; display: grid; place-items: center; border: 0; border-radius: 50%; background: var(--tint); cursor: pointer; }
+.tone-dark .sheet-close, .tone-photo .sheet-close { background: var(--tint-2); color: var(--ink); }
 .sheet-title { margin: 16px 0 10px; font-size: clamp(1.9rem, 1.3rem + 2vw, 2.8rem); font-weight: 500; line-height: 1.04; letter-spacing: -0.035em; padding-right: 48px; }
 .talk .sheet-title { margin-top: 0; }
 .sheet-text { max-width: 50ch; margin: 0; font-size: 1.0625rem; color: var(--ink-2); }
@@ -503,8 +587,8 @@ input, select, textarea, button { font: inherit; color: inherit; }
 .checks svg { flex: none; margin-top: 5px; color: var(--red); }
 .tone-dark .checks svg, .tone-photo .checks svg { color: var(--accent); }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
-.chips li { padding: 8px 12px; border-radius: 0; background: rgb(255 255 255 / 0.05); font-size: 0.875rem; }
-.tone-dark .chips li, .tone-photo .chips li { background: rgb(255 255 255 / 0.1); }
+.chips li { padding: 8px 12px; border-radius: 0; background: var(--tint); font-size: 0.875rem; }
+.tone-dark .chips li, .tone-photo .chips li { background: var(--tint-2); }
 .sheet-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 32px; }
 .tone-dark .pill-outline, .tone-photo .pill-outline { color: #fff; box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / 0.35); }
 
@@ -520,7 +604,7 @@ input, select, textarea, button { font: inherit; color: inherit; }
 .form-submit { width: 100%; margin-top: 6px; }
 .sent { display: grid; justify-items: center; gap: 14px; margin-top: 28px; padding: 28px; border-radius: 0; background: var(--paper); text-align: center; box-shadow: inset 0 0 0 1px var(--line); }
 .sent p { max-width: 38ch; margin: 0; color: var(--ink-2); }
-.sent-icon { width: 60px; height: 60px; display: grid; place-items: center; border-radius: 50%; background: var(--accent); color: var(--bg); }
+.sent-icon { width: 60px; height: 60px; display: grid; place-items: center; border-radius: 50%; background: var(--accent); color: var(--on-accent); }
 
 /* ---------- Process ---------- */
 
@@ -593,7 +677,6 @@ input, select, textarea, button { font: inherit; color: inherit; }
 }
 
 @media (prefers-reduced-transparency: reduce) {
-  .float-nav { background: var(--paper); }
 }
 
 /* ===== Folded in from the old combined.css override layer ===== */
@@ -632,8 +715,7 @@ main:focus { outline: none; }
 .page-hero-card { position: relative; isolation: isolate; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; min-height: min(720px, 86svh); padding: 150px 5% clamp(48px, 6vw, 84px); border-radius: 0; background: var(--navy); color: #fff; }
 .page-hero-img { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; }
 .page-hero-card::after { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, #0b0b0be0, #0b0b0b40 88%), linear-gradient(0deg, #0b0b0bd0, transparent 70%), linear-gradient(180deg, #0b0b0b66, transparent 24%); }
-.page-hero .pill-red { background: var(--accent); color: var(--bg); box-shadow: none; }
-.page-hero .pill-red:hover { background: #4fd396; }
+.page-hero .pill-red { --fill: var(--accent); background: var(--fill); color: var(--on-accent); box-shadow: none; }
 .page-hero-copy { max-width: 900px; }
 .crumbs { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 26px; padding: 0; list-style: none; font-size: .875rem; color: rgb(255 255 255 / 0.62); }
 .crumbs li + li::before { content: "/"; margin-right: 8px; opacity: .6; }
@@ -832,7 +914,7 @@ main:focus { outline: none; }
 .footer-statement { padding-bottom: clamp(44px, 7vw, 90px); border-bottom: 1px solid var(--line); }
 .footer-statement p { max-width: 30ch; margin: 0; font-size: clamp(1.9rem, 5.2vw, 4.2rem); line-height: 1.12; letter-spacing: -0.02em; color: var(--ink); }
 .footer-cols { display: grid; grid-template-columns: minmax(0, 1.4fr) repeat(3, minmax(0, 1fr)); gap: clamp(28px, 4vw, 48px); padding-block: clamp(40px, 6vw, 72px); }
-.footer-brand img { width: 92px; height: auto; }
+.footer-brand img { width: 150px; height: auto; }
 .footer-brand p { max-width: 32ch; margin: 16px 0 0; color: var(--ink-2); line-height: 1.65; }
 .footer-cols h3 { margin: 4px 0 16px; color: var(--ink-3); }
 .footer-cols ul { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; color: var(--ink-2); }
@@ -855,41 +937,151 @@ main:focus { outline: none; }
   .footer-cols { grid-template-columns: 1fr; }
 }
 
-/* ---------- Full-screen menu ---------- */
-/* The overlay is reachable at every width, not just on phones: it is one of the page's
-   set pieces rather than a small-screen fallback. */
-.hero-nav .show-sm, .float-nav .show-sm { display: inline-flex !important; }
+/* ---------- Capsule shape ----------
+   The liquid-metal surfaces are capsules: the chrome rim only reads on a continuous curve.
+   This is the one deliberate exception to the square shape rule at the top of this file. */
+.float-nav, .hero-links, .hero .pill-glass { border-radius: 999px; }
+.float-nav { padding: 6px; }
+.float-nav .brand { padding-left: 8px; }
+.float-links a, .float-pill, .hero-links a, .float-nav .pill, .hero-actions .pill { border-radius: 999px; }
+.float-pill { background: rgb(255 255 255 / 0.14); box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.25); }
+.hero-links a:hover, .hero-links a[aria-current="page"] { box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.2); }
 
-.menu-layer { place-items: stretch; padding: 0; }
-.menu {
-  position: relative; z-index: 1; display: flex; flex-direction: column;
-  width: 100%; height: 100%; padding: clamp(20px, 3.5vw, 44px) var(--gutter) clamp(24px, 4vw, 52px);
-  background: var(--bg); color: var(--ink); overflow-y: auto; overscroll-behavior: contain;
+/* Logo: light-ink artwork on dark grounds, the original ink on light ones. The hero nav
+   (.brand-light) sits on a dark card in both themes, so it always takes the light artwork. */
+.on-light { display: none; }
+html.light .brand:not(.brand-light) .on-dark, html.light .footer-brand .on-dark { display: none; }
+html.light .brand:not(.brand-light) .on-light, html.light .footer-brand .on-light { display: block; }
+
+/* ---------- Morph menu (src/components/ui/morph-menu.tsx) ----------
+   Closed: a liquid-metal "Menu" capsule in the nav. Open: the same surface grows down-left
+   into a liquid-metal panel. The slot keeps the closed size so the
+   nav never reflows; the surface overflows it, pinned at its top-right corner. */
+.mm { position: relative; flex: none; width: 112px; height: 44px; z-index: 70; }
+.mm-surface {
+  position: absolute; top: 0; right: 0; overflow: hidden; isolation: isolate;
+  display: flex; flex-direction: column; color: #fff;
 }
-.menu-top { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
-.menu-close { display: inline-flex; align-items: center; gap: 9px; padding: 10px 14px; border: 1px solid var(--line-strong); background: none; color: var(--ink); font-family: var(--font-mono); font-size: 0.625rem; text-transform: uppercase; letter-spacing: 0.18em; cursor: pointer; transition: border-color 0.25s, color 0.25s; }
-.menu-close:hover { border-color: var(--accent); color: var(--accent); }
-
-.menu-nav { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 0; padding-block: clamp(20px, 3vw, 38px); }
-.menu-nav a {
-  display: flex; align-items: baseline; gap: clamp(14px, 2vw, 30px);
-  padding-block: clamp(5px, 0.8vw, 11px); border-bottom: 1px solid var(--line);
-  color: var(--ink); text-decoration: none;
-  font-size: clamp(1.85rem, 5vw, 4rem); font-weight: 900; text-transform: uppercase;
-  line-height: 0.95; letter-spacing: -0.04em;
-  transition: color 0.3s var(--ease), border-color 0.3s;
+.mm-surface[data-open] { box-shadow: 0 30px 60px -24px rgb(0 0 0 / 0.7); }
+.mm-bar {
+  flex: none; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  height: 44px; padding: 0 18px; border: 0; background: none; color: inherit; cursor: pointer;
+  font-size: 0.9375rem; font-weight: 500; letter-spacing: -0.01em; white-space: nowrap;
+  transition: color 0.3s var(--ease), padding 0.4s var(--ease);
+  -webkit-tap-highlight-color: transparent;
 }
-.menu-nav a:hover { color: var(--accent); border-color: rgb(var(--accent-rgb) / 0.5); }
-.menu-index { flex: none; font-family: var(--font-mono); font-size: 0.625rem; font-weight: 500; letter-spacing: 0.14em; color: var(--accent); }
-
-.menu-foot { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(22px, 4vw, 60px); padding-top: clamp(20px, 3vw, 34px); border-top: 1px solid var(--line); }
-.menu-foot .eyebrow { margin: 0 0 14px; color: var(--ink-3); }
-.menu-actions { display: flex; flex-wrap: wrap; gap: 10px; }
-.menu-links { display: grid; gap: 9px; margin: 0; padding: 0; list-style: none; color: var(--ink-2); }
-.menu-links a { color: var(--ink); text-decoration: none; transition: color 0.2s; }
-.menu-links a:hover { color: var(--accent); }
-
-@media (max-width: 760px) {
-  .menu-foot { grid-template-columns: 1fr; }
-  .menu-nav { justify-content: flex-start; }
+.mm-bar { text-shadow: 0 1px 3px rgb(0 0 0 / 0.6); }
+.mm-surface[data-open] .mm-bar { padding: 8px 24px 0; height: 52px; }
+.mm-icon { position: relative; width: 18px; height: 18px; }
+.mm-icon i { position: absolute; left: 0; top: 50%; width: 18px; height: 2px; margin-top: -1px; border-radius: 2px; background: currentColor; transition: transform 0.4s var(--ease); }
+.mm-icon i:first-child { transform: translateY(-3px); }
+.mm-icon i:last-child { transform: translateY(3px); }
+.mm-surface[data-open] .mm-icon i:first-child { transform: rotate(45deg); }
+.mm-surface[data-open] .mm-icon i:last-child { transform: rotate(-45deg); }
+@media (hover: hover) and (pointer: fine) {
+  .mm-surface:not([data-open]) { transition: scale 0.25s var(--ease); }
+  .mm-surface:not([data-open]):hover { scale: 1.05; }
 }
+.mm-bar:active { opacity: 0.8; }
+
+.mm-nav { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 4px 24px 0; }
+.mm-nav[hidden] { display: none; }
+.mm-item {
+  display: flex; height: 1em; overflow: hidden; color: #f2f1ed; text-decoration: none;
+  font-size: 1.75rem; font-weight: 600; line-height: 1; text-transform: uppercase; letter-spacing: -0.03em;
+}
+.mm-ch { display: inline-block; height: 1em; overflow: hidden; }
+.mm-item { transition: color 0.2s var(--ease); }
+.mm-item:hover, .mm-item:focus-visible { color: var(--accent); }
+.mm-ch > span { display: block; line-height: 1em; transition: transform 0.45s var(--ease); }
+/* Rolls up letter by letter on the way in; on the way out it eases straight back from wherever
+   it got to, so a quick pass over the list never strands a half-rolled word. */
+.mm-item:hover .mm-ch > span, .mm-item:focus-visible .mm-ch > span { transform: translateY(-50%); transition: transform 0.8s var(--ease) calc(var(--i) * 30ms); }
+.mm-item:focus-visible { outline-offset: 6px; }
+.mm-foot { display: flex; align-items: center; justify-content: space-between; align-self: stretch; margin-top: 10px; padding: 14px 0 18px; border-top: 1px solid rgb(255 255 255 / 0.1); }
+.mm-foot a { color: rgb(255 255 255 / 0.7); font-family: var(--font-mono); font-size: 0.6875rem; letter-spacing: 0.08em; text-decoration: none; }
+.mm-foot a:hover { color: var(--accent); }
+
+/* ---------- Liquid metal (src/components/ui/liquid-metal.ts) ----------
+   A black face inset 2px inside a chrome rim; the rim is a shader layer showing through
+   that 2px gap. The fallback gradient on .metal-rim is what shows without WebGL2. The text
+   stays light: the reference's #666 label on black is 3.4:1, under the 4.5:1 body-text floor. */
+.metal { isolation: isolate; color: #f2f1ed; }
+.metal-rim, .metal-face { position: absolute; border-radius: inherit; pointer-events: none; }
+.metal-rim {
+  inset: 0; z-index: -2; overflow: hidden;
+  background: linear-gradient(135deg, #f4f4f4, #6b6b6b 30%, #fafafa 50%, #4a4a4a 72%, #d9d9d9);
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.3), 0 9px 9px rgb(0 0 0 / 0.12), 0 2px 5px rgb(0 0 0 / 0.15), 0 20px 12px rgb(0 0 0 / 0.08);
+  transition: box-shadow 0.15s var(--ease);
+}
+.metal-rim canvas { position: absolute; inset: 0; width: 100% !important; height: 100% !important; border-radius: inherit; }
+.metal-face { inset: 2px; z-index: -1; background: linear-gradient(180deg, #202020, #000); transition: box-shadow 0.15s var(--ease); }
+/* Pressed: the face sinks and the shadow tightens, on touch-down. */
+.metal:active .metal-face { box-shadow: inset 0 2px 4px rgb(0 0 0 / 0.4), inset 0 1px 2px rgb(0 0 0 / 0.3); }
+.metal:active .metal-rim { box-shadow: 0 0 0 1px rgb(0 0 0 / 0.5), 0 1px 2px rgb(0 0 0 / 0.3); }
+a.metal, button.metal { transition: scale 0.15s var(--ease); }
+a.metal:active, button.metal:active { scale: 0.98; }
+.hero-links a:hover, .hero-links a[aria-current="page"] { background: rgb(255 255 255 / 0.1); }
+/* The floating bar is black metal in both themes, so it keeps the dark theme's green CTA
+   (the light theme's deep green with dark text would be about 3:1 on it). */
+.float-nav .pill-red { --fill: #34bb7b; background: var(--fill); color: #0b0b0b; }
+
+/* ---------- Image surfaces ----------
+   Every photo sits in a soft rectangle rather than a sharp one: a generous radius, upgraded to
+   a true continuous (squircle) corner where the browser has corner-shape, the way iOS draws
+   its rounded rects. A squircle with the same radius reads tighter, so it gets more. Style
+   comes from a hairline on the edge, light like the metal rims, that turns green on hover,
+   and a soft shadow that seats the photo on the page. The hairline is an outline because an
+   inset shadow would paint underneath the photo. The whole-page heroes stay full bleed. */
+.frame, .card-btn, .contact-card {
+  border-radius: var(--r-media);
+  outline: 1px solid rgb(255 255 255 / 0.12); outline-offset: -1px;
+  box-shadow: 0 30px 60px -32px rgb(0 0 0 / 0.75);
+  transition: outline-color 0.4s var(--ease), box-shadow 0.4s var(--ease);
+}
+.card { border-radius: var(--r-media); }
+@supports (corner-shape: squircle) {
+  .frame, .card, .card-btn, .contact-card { corner-shape: squircle; border-radius: calc(var(--r-media) * 1.7); }
+}
+@media (hover: hover) and (pointer: fine) {
+  .frame:hover, .card-btn:hover { outline-color: rgb(var(--accent-rgb) / 0.55); box-shadow: 0 34px 70px -30px rgb(0 0 0 / 0.85); }
+}
+.card-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+/* On paper the hairline and the shadow both lighten, or they read as a dark smudge. */
+html.light .tone-light .card-btn { outline-color: rgb(var(--ink-rgb) / 0.08); box-shadow: 0 24px 50px -34px rgb(0 0 0 / 0.35); }
+/* The contact card's action tiles sit inside a rounded card, so they round too, a step
+   tighter, the way nested iOS shapes keep their corners concentric. */
+.tile { border-radius: calc(var(--r-media) * 0.55); }
+@supports (corner-shape: squircle) { .tile { corner-shape: squircle; border-radius: calc(var(--r-media) * 0.95); } }
+
+/* ---------- Green buttons: pixel arrow (src/components/ui/pixel-button.ts) ----------
+   Softly rounded, continuous where the browser can draw squircles. Once decorated, the button's
+   own background goes and two pieces paint it instead: the body under the label, and a square
+   5×5 pixel tile at the right end. They meet flush at rest, with one pixel, the small square,
+   in the middle of the tile. On hover the body pulls back one pixel to open a gap, and the
+   pixels around a ↗ fall away, leaving the arrow in green with a couple of strays. */
+.pill-red { position: relative; isolation: isolate; overflow: hidden; border-radius: 12px; }
+@supports (corner-shape: squircle) { .pill-red { corner-shape: squircle; border-radius: 20px; } }
+.float-nav .pill-red, .hero-actions .pill-red { border-radius: 12px; }
+@supports (corner-shape: squircle) { .float-nav .pill-red, .hero-actions .pill-red { border-radius: 20px; } }
+
+.pill-red[data-px] {
+  background: none; padding-right: calc(var(--h, 54px) * 1.2 + 14px);
+}
+.pill-red[data-px] { --h: 44px; }
+.pill-red.pill-lg[data-px] { --h: 54px; }
+.pill-red[data-px] > svg { display: none; } /* the pixel arrow replaces the button's own icon */
+.px-body, .px-tile {
+  position: absolute; top: 0; bottom: 0; z-index: -1; pointer-events: none; background: var(--fill);
+  transition: right 0.35s var(--ease), border-radius 0.35s var(--ease);
+}
+/* 1px overlap at rest so the two pieces read as one surface, with no hairline between them. */
+.px-body { left: 0; right: calc(var(--h) - 1px); }
+.px-tile { right: 0; width: var(--h); display: grid; grid-template-columns: repeat(7, 1fr); grid-template-rows: repeat(7, 1fr); }
+.px-tile i { background: currentColor; opacity: 0; transition: opacity 0.1s linear; }
+.px-tile i.dot { opacity: 1; }
+/* Split: the gap opens, the inner corners round off so both pieces are rounded shapes like the
+   button itself, and the arrow's pixels come on outward from the square. */
+.pill-red[data-px]:hover .px-body, .pill-red[data-px]:focus-visible .px-body { right: calc(var(--h) * 1.18); border-radius: 0 9px 9px 0; }
+.pill-red[data-px]:hover .px-tile, .pill-red[data-px]:focus-visible .px-tile { border-radius: 9px 0 0 9px; }
+.pill-red[data-px]:hover .px-tile i.a, .pill-red[data-px]:focus-visible .px-tile i.a { opacity: 1; transition-delay: calc(var(--d) * 1ms); }

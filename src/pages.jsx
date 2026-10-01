@@ -20,7 +20,7 @@ export const Page = memo(function Page({ route, ui }) {
 
 function OnePage({ ui }) {
   return <>
-    <Hero onTalk={ui.onTalk} onMenu={ui.onMenu} />
+    <Hero onTalk={ui.onTalk} />
     <ManifestoStrip />
     <About />
     <Clients />
@@ -103,7 +103,7 @@ function PageHero({ route, ui, eyebrow, title, serif, text, children }) {
     <section className="page-hero">
       <div className="page-hero-card">
         <img className="page-hero-img" src={route.hero} alt="" fetchPriority="high" draggable={false} />
-        <SiteNav onTalk={ui.onTalk} onMenu={ui.onMenu} />
+        <SiteNav onTalk={ui.onTalk} />
         <div className="page-hero-copy">
           {route.name && (
             <nav aria-label="Breadcrumb">
